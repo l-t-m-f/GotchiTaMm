@@ -7,11 +7,16 @@ namespace GotchiTaMm
 {
     internal class Program
     {
+        // GAME LOOP
+
+        static bool Continue = true;
+
+        // SETUP
 
         static IntPtr Window;
         static IntPtr Renderer;
-        static bool Continue = true;
-        static int[] Keyboard = new int[255];
+
+        // RENDER
 
         // Structure
         static SDL_Rect my_rectangle = new SDL_Rect { x = 50, y = 50, w = 200, h = 60 };
@@ -20,10 +25,17 @@ namespace GotchiTaMm
         static SDL_Rect my_rectangle2 = new SDL_Rect { x = 250, y = 250, w = 20, h = 60 };
         static IntPtr rectangle_ptr = IntPtr.Zero;
 
-        // For input
-        public delegate void KeySymbolDelegate(SDL_Keysym keysym);
-        public static event KeySymbolDelegate KeyDownEvent;
-        public static event KeySymbolDelegate KeyUpEvent;
+        // INPUT
+
+        static int[] Keyboard = new int[255];
+
+        public delegate void KeysymDelegate(SDL_Keysym keysym);
+        public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
+
+        public static event KeysymDelegate KeyDownEvent;
+        public static event KeysymDelegate KeyUpEvent;
+        public static event MouseButtonEventDelegate MouseDownEvent;
+        public static event MouseButtonEventDelegate MouseUpEvent;
 
 
         static void Main(string[] args)
@@ -38,6 +50,8 @@ namespace GotchiTaMm
             // Methods have to respect the delegate definition
             KeyDownEvent += OnKeyDown;
             KeyUpEvent += OnKeyUp;
+            MouseDownEvent += OnMouseDown;
+            MouseUpEvent += OnMouseUp;
 
             while (Continue)
             {
@@ -107,6 +121,12 @@ namespace GotchiTaMm
                     case SDL_EventType.SDL_QUIT:
                         SDL_Quit();
                         Environment.Exit(0);
+                        break;                    
+                    case SDL_EventType.SDL_MOUSEBUTTONDOWN:
+                        MouseDownEvent?.Invoke(e.button);
+                        break;
+                    case SDL_EventType.SDL_MOUSEBUTTONUP:
+                        MouseUpEvent?.Invoke(e.button);
                         break;
                     case SDL_EventType.SDL_KEYDOWN:
                         KeyDownEvent?.Invoke(e.key.keysym);
@@ -119,7 +139,6 @@ namespace GotchiTaMm
                     default:
                         // error...
                         break;
-
                 }
             }
         }
@@ -138,6 +157,16 @@ namespace GotchiTaMm
         public static void OnKeyUp(SDL_Keysym keysym)
         {
             Console.WriteLine($"Key up: {keysym.scancode}");
+        }
+
+        public static void OnMouseDown(SDL_MouseButtonEvent mouseButtonEvent)
+        {
+            Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
+        }
+
+        public static void OnMouseUp(SDL_MouseButtonEvent mouseButtonEvent)
+        {
+            Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
         }
     }
 }
