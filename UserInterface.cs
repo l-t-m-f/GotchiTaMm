@@ -4,6 +4,7 @@ using static SDL2.SDL_ttf;
 
 namespace GotchiTaMm
 {
+
     internal enum ButtonState
     {
         Undefined = -1,
@@ -15,13 +16,16 @@ namespace GotchiTaMm
 
     internal class UserInterface
     {
+        const int MAX_FONT_SIZE_FACTOR = 12;
+
         internal SDL_Rect Header = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
         internal SDL_Rect Footer = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
         internal static UserInterface? Instance { get; private set; }
-        internal Button[] Buttons = new Button[3];
-        internal IntPtr[] Fonts = new IntPtr[3];
-        internal IntPtr[] Texts = new IntPtr[3];
-        internal IntPtr[] Images = new IntPtr[8];
+        internal List<Button> Buttons = new List<Button>();
+        internal Dictionary<string, IntPtr[]> Fonts = new Dictionary<string, IntPtr[]>();
+        internal Dictionary<string, IntPtr> Texts = new Dictionary<string, IntPtr>();
+        internal Dictionary<string, IntPtr> Images = new Dictionary<string, IntPtr>();
+        internal Dictionary<string, IntPtr> TextImages = new Dictionary<string, IntPtr>();
 
         private UserInterface()
         {
@@ -29,50 +33,67 @@ namespace GotchiTaMm
                     new SDL_Color { r = 0, g = 255, b = 0, a = 255 },
                     new SDL_Color { r = 255, g = 0, b = 0, a = 255 },
                 };
-            Buttons[0] = new Button(new SDL_Rect {
+            Buttons.Add(new Button(new SDL_Rect {
                 x = ((Program.WINDOW_W / 5) * 1) - 20,
                 y = Program.WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme);
+                button_color_theme));
 
-            Buttons[1] = new Button(new SDL_Rect {
+            Buttons.Add(new Button(new SDL_Rect {
                 x = (Program.WINDOW_W / 2) - 20,
                 y = Program.WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme);
+                button_color_theme));
 
-            Buttons[2] = new Button(new SDL_Rect {
-                x = ((Program.WINDOW_W / 5) * 4)  - 20,
+            Buttons.Add(new Button(new SDL_Rect {
+                x = ((Program.WINDOW_W / 5) * 4) - 20,
                 y = Program.WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme);
+                button_color_theme));
 
-            Fonts[0] = TTF_OpenFont("blue_screen.ttf", 36);
-            if (Fonts[0] == IntPtr.Zero)
+            Fonts.Add("BlueScreen", new IntPtr[MAX_FONT_SIZE_FACTOR]);
+
+            for(int i = 0 ; i < Fonts?.GetValueOrDefault("BlueScreen")?.GetLength(0) ; i++)
             {
-                Console.WriteLine("There was a problem loading the font");
+                IntPtr lastFont = TTF_OpenFont("blue_screen.ttf", (int)Math.Pow(2, i));
+                if (lastFont == IntPtr.Zero)
+                {
+                    Console.WriteLine("There was a problem loading the font");
+                }
+
+                IntPtr[]? fontsArray = Fonts?.GetValueOrDefault("BlueScreen");
+                if(fontsArray != null)
+                    fontsArray[i] = lastFont;
             }
 
-            Texts[0] = TTF_RenderUTF8_Blended(Fonts[0], "Test", new SDL_Color { r = 55, g = 0, b = 0, a = 255 });
-            if (Texts[0] == IntPtr.Zero)
+            IntPtr testText = TTF_RenderUTF8_Blended(Fonts.GetValueOrDefault("BlueScreen")[4], "Test", new SDL_Color { r = 55, g = 0, b = 0, a = 255 });
+            if (testText == IntPtr.Zero)
             {
-                Console.WriteLine("There was a creating surface of text");
+                Console.WriteLine("There was a creating text pointer");
             }
+            Texts.Add("Test", testText);
 
-            Images[0] = IMG_LoadTexture(Program.Renderer, "gfx/Attention.png");
-            Images[1] = IMG_LoadTexture(Program.Renderer, "gfx/Bathroom.png");
-            Images[2] = IMG_LoadTexture(Program.Renderer, "gfx/Food.png");
-            Images[3] = IMG_LoadTexture(Program.Renderer, "gfx/Game.png");
-            Images[4] = IMG_LoadTexture(Program.Renderer, "gfx/Lights.png");
-            Images[5] = IMG_LoadTexture(Program.Renderer, "gfx/Medicine.png");
-            Images[6] = IMG_LoadTexture(Program.Renderer, "gfx/Status.png");
-            Images[7] = IMG_LoadTexture(Program.Renderer, "gfx/Training.png");
+            IntPtr testTextImage = SDL_CreateTextureFromSurface(Program.Renderer, Texts.GetValueOrDefault("Test"));
+            if (testTextImage == IntPtr.Zero)
+            {
+                Console.WriteLine("There was a creating text image pointer");
+            }
+            TextImages.Add("Test", testTextImage);
+
+            Images.Add("Attention", IMG_LoadTexture(Program.Renderer, "gfx/Attention.png"));
+            Images.Add("Bathroom", IMG_LoadTexture(Program.Renderer, "gfx/Bathroom.png"));
+            Images.Add("Food", IMG_LoadTexture(Program.Renderer, "gfx/Food.png"));
+            Images.Add("Game", IMG_LoadTexture(Program.Renderer, "gfx/Game.png"));
+            Images.Add("Lights", IMG_LoadTexture(Program.Renderer, "gfx/Lights.png"));
+            Images.Add("Medicine", IMG_LoadTexture(Program.Renderer, "gfx/Medicine.png"));
+            Images.Add("Status", IMG_LoadTexture(Program.Renderer, "gfx/Status.png"));
+            Images.Add("Training", IMG_LoadTexture(Program.Renderer, "gfx/Training.png"));
         }
 
         public static UserInterface GetUI()
@@ -98,7 +119,7 @@ namespace GotchiTaMm
             int x = 0;
             int y = 0;
 
-            foreach(IntPtr i in Images)
+            foreach(IntPtr i in Images.Values)
             {
                 Program.Blit(i, 50 * x, 25 * y);
                 x++; y++;

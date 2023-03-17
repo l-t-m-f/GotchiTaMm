@@ -6,43 +6,16 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Drawing;
 
 namespace GotchiTaMm
 {
-
-    /**
-     * @TODO: 
-     * 1. Make a SaveState class, serialize it to binary and encrypt to a file (do I need b64?)
-     * 2. Make button
-     */
-
     internal class Program
     {
-        // GAME LOOP
-
         internal const int WINDOW_W = 480;
         internal const int WINDOW_H = 320;
 
-        static bool Continue = true;
-
-        // SETUP
-
         static internal IntPtr Window;
         static internal IntPtr Renderer;
-
-        // RENDER
-
-        // Structure
-        static SDL_Rect my_rectangle = new SDL_Rect { x = 50, y = 50, w = 200, h = 60 };
-
-        // Structure & Pointer to it
-        static SDL_Rect my_rectangle2 = new SDL_Rect { x = 250, y = 250, w = 20, h = 60 };
-        static IntPtr rectangle_ptr = IntPtr.Zero;
-
-        static SDL_Rect my_circle = new SDL_Rect { x = WINDOW_W / 2, y = WINDOW_H / 2, w = 100, h = 80 };
-
-        // INPUT
 
         internal static int[] Keyboard = new int[255];
 
@@ -62,23 +35,15 @@ namespace GotchiTaMm
         public static event MouseButtonEventDelegate? MouseUpEvent;
         public static event MouseMotionEventDelegate? MouseMotionEvent;
 
+        static SaveState Save;
+        static Game Game;
+
         // ENCRYPTION
 
         static byte[] secret = {
                 0x0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
                 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1
         };
-
-
-        // SAVING
-
-        [Serializable]
-        public class SaveState
-        {
-            public DateTime LastTime { get; set; }
-        }
-
-        public static SaveState? Save;
 
         // OTHER THREADS
 
@@ -88,14 +53,15 @@ namespace GotchiTaMm
 
         static UserInterface? UI;
 
-
-        // Actual program starts here...
+                // Actual program starts here...
 
 
         static void Main(string[] args)
         {
 
             Setup();
+
+            Game = new Game();
 
             UI = UserInterface.GetUI();
 
@@ -115,9 +81,9 @@ namespace GotchiTaMm
 
             counter.Start();
 
-            int size = Marshal.SizeOf(my_rectangle2);
-            rectangle_ptr = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(my_rectangle2, rectangle_ptr, false);
+            //int size = Marshal.SizeOf(my_rectangle2);
+            //rectangle_ptr = Marshal.AllocHGlobal(size);
+            //Marshal.StructureToPtr(my_rectangle2, rectangle_ptr, false);
 
             // Subscribe the respective methods to the events
             // Methods have to respect the delegate definition
@@ -127,7 +93,7 @@ namespace GotchiTaMm
             MouseUpEvent += OnMouseUp;
             MouseMotionEvent += OnMouseMove;
 
-            while (Continue)
+            while (Game.Continue)
             {
                 Input();
                 Render();
@@ -179,7 +145,6 @@ namespace GotchiTaMm
 
 
         }
-
         static void Render()
         {
             SDL_SetRenderDrawColor(Renderer, 155, 155, 155, 255);
@@ -188,24 +153,21 @@ namespace GotchiTaMm
             SDL_SetRenderDrawColor(Renderer, 125, 205, 235, 255);
             SDL_RenderDrawLine(Renderer, 5, 5, 300, 310);
 
-
-            SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
-            // Draw with structure ref
-            SDL_RenderFillRect(Renderer, ref my_rectangle);
-
-            SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
-            // Draw with pointer to structure
-            SDL_RenderFillRect(Renderer, rectangle_ptr);
-
+            Game.Pet.Draw();
             UI.Draw();
 
-            IntPtr texture_of = SDL_CreateTextureFromSurface(Renderer, UI.Texts[0]);
+            //SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
+            //// Draw with structure ref
+            //SDL_RenderFillRect(Renderer, ref my_rectangle);
 
-            Blit(texture_of, 0, 220);
+            //SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
+            //// Draw with pointer to structure
+            //SDL_RenderFillRect(Renderer, rectangle_ptr);
 
-            SDL_SetRenderDrawColor(Renderer, 0, 255, 255, 255);
+            Blit(UI.TextImages.GetValueOrDefault("Test"), 0, 220);
 
-            FillEllipsoid(my_circle);
+            //SDL_SetRenderDrawColor(Renderer, 0, 255, 255, 255);
+            //FillEllipsoid(my_circle);
 
             SDL_RenderPresent(Renderer);
         }
@@ -477,7 +439,7 @@ namespace GotchiTaMm
         static void QuitGame(sbyte ProgramCode)
         {
             // Release unsafe pointer
-            Marshal.FreeHGlobal(rectangle_ptr);
+            //Marshal.FreeHGlobal(rectangle_ptr);
 
             SaveGame(DateTime.Now);
             TTF_Quit();
