@@ -19,8 +19,8 @@ namespace GotchiTaMm
     {
         // GAME LOOP
 
-        const int WINDOW_W = 480;
-        const int WINDOW_H = 320;
+        internal const int WINDOW_W = 480;
+        internal const int WINDOW_H = 320;
 
         static bool Continue = true;
 
@@ -40,15 +40,23 @@ namespace GotchiTaMm
 
         // INPUT
 
-        static int[] Keyboard = new int[255];
+        internal static int[] Keyboard = new int[255];
+
+        public static class Mouse
+        {
+            internal static SDL_Point Position = new SDL_Point();
+            internal static int[] Buttons = new int[4];
+        }
 
         public delegate void KeysymDelegate(SDL_Keysym keysym);
         public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
+        public delegate void MouseMotionEventDelegate(SDL_MouseMotionEvent mouseMotionEvent);
 
         public static event KeysymDelegate? KeyDownEvent;
         public static event KeysymDelegate? KeyUpEvent;
         public static event MouseButtonEventDelegate? MouseDownEvent;
         public static event MouseButtonEventDelegate? MouseUpEvent;
+        public static event MouseMotionEventDelegate? MouseMotionEvent;
 
         // ENCRYPTION
 
@@ -112,6 +120,7 @@ namespace GotchiTaMm
             KeyUpEvent += OnKeyUp;
             MouseDownEvent += OnMouseDown;
             MouseUpEvent += OnMouseUp;
+            MouseMotionEvent += OnMouseMove;
 
             while (Continue)
             {
@@ -174,12 +183,9 @@ namespace GotchiTaMm
             // Draw with pointer to structure
             SDL_RenderFillRect(Renderer, rectangle_ptr);
 
-            foreach (Button b in UI.buttons)
-            {
-                b.Draw();
-            }
+            UI.Draw();
 
-            IntPtr texture_of = SDL_CreateTextureFromSurface(Renderer, UI.texts[0]);
+            IntPtr texture_of = SDL_CreateTextureFromSurface(Renderer, UI.Texts[0]);
 
             Blit(texture_of, 0, 220);
 
@@ -195,6 +201,9 @@ namespace GotchiTaMm
                     case SDL_EventType.SDL_QUIT:
                         QuitGame(0);
                         break;
+                    case SDL_EventType.SDL_MOUSEMOTION:
+                        MouseMotionEvent?.Invoke(e.motion);
+                        break;
                     case SDL_EventType.SDL_MOUSEBUTTONDOWN:
                         MouseDownEvent?.Invoke(e.button);
                         break;
@@ -203,11 +212,9 @@ namespace GotchiTaMm
                         break;
                     case SDL_EventType.SDL_KEYDOWN:
                         KeyDownEvent?.Invoke(e.key.keysym);
-                        Keyboard[(int)e.key.keysym.scancode] = 1;
                         break;
                     case SDL_EventType.SDL_KEYUP:
                         KeyUpEvent?.Invoke(e.key.keysym);
-                        Keyboard[(int)e.key.keysym.scancode] = 0;
                         break;
                     default:
                         // error...
@@ -219,6 +226,7 @@ namespace GotchiTaMm
         public static void OnKeyDown(SDL_Keysym keysym)
         {
             Console.WriteLine($"Key down: {keysym.scancode}");
+            Keyboard[(int)keysym.scancode] = 1;
 
             if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
             {
@@ -229,16 +237,31 @@ namespace GotchiTaMm
         public static void OnKeyUp(SDL_Keysym keysym)
         {
             Console.WriteLine($"Key up: {keysym.scancode}");
+            Keyboard[(int)keysym.scancode] = 0;
         }
 
         public static void OnMouseDown(SDL_MouseButtonEvent mouseButtonEvent)
         {
             Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
+            if(mouseButtonEvent.button <= 3)
+            {
+                Mouse.Buttons[mouseButtonEvent.button] = 1;
+            }
         }
 
         public static void OnMouseUp(SDL_MouseButtonEvent mouseButtonEvent)
         {
             Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
+            if (mouseButtonEvent.button <= 3)
+            {
+                Mouse.Buttons[mouseButtonEvent.button] = 0;
+            }
+        }
+        public static void OnMouseMove(SDL_MouseMotionEvent mouseMotionEvent)
+        {
+            Console.WriteLine($"Mouse moving at {mouseMotionEvent.x}, {mouseMotionEvent.y}");
+            Mouse.Position.x = mouseMotionEvent.x;
+            Mouse.Position.y = mouseMotionEvent.y;
         }
 
         public static void CounterThread()
