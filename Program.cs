@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Drawing;
 
 namespace GotchiTaMm
 {
@@ -38,6 +39,8 @@ namespace GotchiTaMm
         // Structure & Pointer to it
         static SDL_Rect my_rectangle2 = new SDL_Rect { x = 250, y = 250, w = 20, h = 60 };
         static IntPtr rectangle_ptr = IntPtr.Zero;
+
+        static SDL_Rect my_circle = new SDL_Rect { x = WINDOW_W / 2, y = WINDOW_H / 2, w = 100, h = 80 };
 
         // INPUT
 
@@ -84,6 +87,7 @@ namespace GotchiTaMm
         // GUI
 
         static UserInterface? UI;
+
 
         // Actual program starts here...
 
@@ -159,14 +163,14 @@ namespace GotchiTaMm
                     $"There was an issue creating the renderer:\n{SDL_GetError()}");
             }
 
-            if(TTF_Init() < 0)
+            if (TTF_Init() < 0)
             {
                 Console.WriteLine(
                     $"There was an issue starting SDL_ttf:\n{SDL_GetError()}!");
             }
 
             IMG_InitFlags img_flags = IMG_InitFlags.IMG_INIT_PNG;
-            if(IMG_Init(img_flags) != (int)img_flags)
+            if (IMG_Init(img_flags) != (int)img_flags)
             {
                 Console.WriteLine(
                     $"There was an issue starting SDL_image:\n{SDL_GetError()}!");
@@ -198,6 +202,10 @@ namespace GotchiTaMm
             IntPtr texture_of = SDL_CreateTextureFromSurface(Renderer, UI.Texts[0]);
 
             Blit(texture_of, 0, 220);
+
+            SDL_SetRenderDrawColor(Renderer, 0, 255, 255, 255);
+
+            FillEllipsoid(my_circle);
 
             SDL_RenderPresent(Renderer);
         }
@@ -253,7 +261,7 @@ namespace GotchiTaMm
         public static void OnMouseDown(SDL_MouseButtonEvent mouseButtonEvent)
         {
             Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
-            if(mouseButtonEvent.button <= 3)
+            if (mouseButtonEvent.button <= 3)
             {
                 Mouse.Buttons[mouseButtonEvent.button] = 1;
             }
@@ -276,7 +284,7 @@ namespace GotchiTaMm
 
         public static void CounterThread()
         {
-            while(true)
+            while (true)
             {
                 Thread.Sleep(1000);
                 Console.WriteLine("A second has passed.");
@@ -287,7 +295,7 @@ namespace GotchiTaMm
         {
             try
             {
-                if(Save == null)
+                if (Save == null)
                 {
                     Console.WriteLine("Error! Attempting to save, but SaveState is corrupt.");
                     QuitGame(-1);
@@ -364,7 +372,8 @@ namespace GotchiTaMm
                 Console.WriteLine($"The decryption failed. {ex}");
             }
 
-            if(save == null ) {
+            if (save == null)
+            {
 
                 Console.WriteLine("Save is corrupt, therefore, must reset save.");
                 save = new SaveState {
@@ -374,6 +383,87 @@ namespace GotchiTaMm
 
             return save;
         }
+
+        public static void DrawEllipsoid(SDL_Rect circle)
+        {
+            double pih = Math.PI / 2;
+            const int prec = 150; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
+            double theta = 0; // angle that will be increased each loop
+
+            int x = (int)(circle.w * Math.Cos(theta));//start point
+            int y = (int)(circle.h * Math.Sin(theta));//start point
+            int x1 = x;
+            int y1 = y;
+
+            double step = pih / prec; // amount to add to theta each time (degrees)
+            for (theta = step ; theta <= pih ; theta += step)//step through only a 90 arc (1 quadrant)
+            {
+                //get new point location
+                x1 = (int)(circle.w * Math.Cos(theta) + 0.5); //new point (+.5 is a quick rounding method)
+                y1 = (int)(circle.h * Math.Sin(theta) + 0.5); //new point (+.5 is a quick rounding method)
+
+                //draw line from previous point to new point, ONLY if point incremented
+                if ((x != x1) || (y != y1))//only draw if coordinate changed
+                {
+                    SDL_RenderDrawLine(Renderer, circle.x + x, circle.y - y, circle.x + x1, circle.y - y1);//quadrant TR
+                    SDL_RenderDrawLine(Renderer, circle.x - x, circle.y - y, circle.x - x1, circle.y - y1);//quadrant TL
+                    SDL_RenderDrawLine(Renderer, circle.x - x, circle.y + y, circle.x - x1, circle.y + y1);//quadrant BL
+                    SDL_RenderDrawLine(Renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
+                }
+                //save previous points
+                x = x1;//save new previous point
+                y = y1;//save new previous point
+            }
+            //arc did not finish because of rounding, so finish the arc 
+            if (x != 0)
+            {
+                x = 0;
+                SDL_RenderDrawLine(Renderer, circle.x + x, circle.y - y, circle.x + x1, circle.y - y1);//quadrant TR
+                SDL_RenderDrawLine(Renderer, circle.x - x, circle.y - y, circle.x - x1, circle.y - y1);//quadrant TL
+                SDL_RenderDrawLine(Renderer, circle.x - x, circle.y + y, circle.x - x1, circle.y + y1);//quadrant BL
+                SDL_RenderDrawLine(Renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
+            }
+        }
+        public static void FillEllipsoid(SDL_Rect circle)
+        {
+            double pih = Math.PI / 2;
+            const int prec = 150; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
+            double theta = 0; // angle that will be increased each loop
+
+            int x = (int)(circle.w * Math.Cos(theta));//start point
+            int y = (int)(circle.h * Math.Sin(theta));//start point
+            int x1 = x;
+            int y1 = y;
+
+            SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
+            SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
+
+            double step = pih / prec; // amount to add to theta each time (degrees)
+            for (; theta <= pih + step; theta += step)//step through only a 90 arc (1 quadrant)
+            {
+                //get new point location
+                x1 = (int)(circle.w * Math.Cos(theta) + 0.5); //new point (+.5 is a quick rounding method)
+                y1 = (int)(circle.h * Math.Sin(theta) + 0.5); //new point (+.5 is a quick rounding method)
+
+                //draw line from previous point to new point, ONLY if point incremented
+                if ((x != x1) || (y != y1))//only draw if coordinate changed
+                {
+                    SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
+                    SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
+                }       
+                //save previous points
+                x = x1;//save new previous point
+                y = y1;//save new previous point
+            }
+            //arc did not finish because of rounding, so finish the arc
+            if (x != 0)
+            {
+                x = 0;
+                SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
+                SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
+            }
+        }
+
 
         internal static void Blit(IntPtr texture, int x, int y)
         {
