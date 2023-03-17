@@ -1,7 +1,7 @@
 ﻿using static SDL2.SDL;
 
 using System.Runtime.InteropServices;
-using System.Drawing;
+using System.Security.Cryptography;
 
 namespace GotchiTaMm
 {
@@ -37,10 +37,29 @@ namespace GotchiTaMm
         public static event MouseButtonEventDelegate MouseDownEvent;
         public static event MouseButtonEventDelegate MouseUpEvent;
 
+        // ENCRYPTION
+
+        static byte[] secret = {
+                0x0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+                0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1
+        };
+
+        // Actual program starts here...
 
         static void Main(string[] args)
         {
             Setup();
+
+            Task<DateTime> lastShutdownTime = Load();
+
+            if (lastShutdownTime.Result == DateTime.MinValue)
+            {
+                Console.WriteLine("This is the first time the program has been run.");
+            }
+            else
+            {
+                Console.WriteLine($"The program was last shutdown at: {lastShutdownTime.Result}");
+            }
 
             int size = Marshal.SizeOf(my_rectangle2);
             rectangle_ptr = Marshal.AllocHGlobal(size);
@@ -59,9 +78,7 @@ namespace GotchiTaMm
                 Render();
             }
 
-            Marshal.FreeHGlobal(rectangle_ptr);
-
-            Console.WriteLine("Program exited successfully!");
+            QuitGame();
         }
 
         static void Setup()
@@ -114,14 +131,13 @@ namespace GotchiTaMm
 
         static void Input()
         {
-            while(SDL_PollEvent(out SDL_Event e) == 1)
+            while (SDL_PollEvent(out SDL_Event e) == 1)
             {
-                switch(e.type)
+                switch (e.type)
                 {
                     case SDL_EventType.SDL_QUIT:
-                        SDL_Quit();
-                        Environment.Exit(0);
-                        break;                    
+                        QuitGame();
+                        break;
                     case SDL_EventType.SDL_MOUSEBUTTONDOWN:
                         MouseDownEvent?.Invoke(e.button);
                         break;
@@ -147,10 +163,9 @@ namespace GotchiTaMm
         {
             Console.WriteLine($"Key down: {keysym.scancode}");
 
-            if(keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
+            if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
             {
-                SDL_Quit();
-                Environment.Exit(0);
+                QuitGame();
             }
         }
 
@@ -167,6 +182,83 @@ namespace GotchiTaMm
         public static void OnMouseUp(SDL_MouseButtonEvent mouseButtonEvent)
         {
             Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
+        }
+
+        static void Save(DateTime lastShutdownTime)
+        {
+            try
+            {
+                using FileStream fileStream = new("MEM", FileMode.OpenOrCreate);
+                using Aes aes = Aes.Create();
+                aes.Key = secret;
+
+                byte[] iv = aes.IV;
+                fileStream.Write(iv, 0, iv.Length);
+
+                using CryptoStream cryptoStream = new(
+                    fileStream,
+                    aes.CreateEncryptor(),
+                    CryptoStreamMode.Write);
+                using StreamWriter encryptWriter = new(cryptoStream);
+                encryptWriter.WriteLine(lastShutdownTime.ToBinary());
+
+                Console.WriteLine("The file was encrypted.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"The encryption failed. {ex}");
+            }
+        }
+
+        static async Task<DateTime> Load()
+        {
+            DateTime lastShutdownTime = DateTime.MinValue;
+
+            try
+            {
+
+                if (File.Exists("MEM"))
+                {
+                    using FileStream fileStream = new("MEM", FileMode.Open);
+                    using Aes aes = Aes.Create();
+
+                    byte[] iv = new byte[aes.IV.Length];
+                    int numBytesToRead = aes.IV.Length;
+                    int numBytesRead = 0;
+                    while (numBytesToRead > 0)
+                    {
+                        int n = fileStream.Read(iv, numBytesRead, numBytesToRead);
+                        if (n == 0) break;
+
+                        numBytesRead += n;
+                        numBytesToRead -= n;
+                    }
+
+                    using CryptoStream cryptoStream = new(fileStream, aes.CreateDecryptor(secret, iv), CryptoStreamMode.Read);
+                    using StreamReader decryptReader = new(cryptoStream);
+                    string decryptedMessage = await decryptReader.ReadToEndAsync();
+                    long ticks = long.Parse(decryptedMessage);
+                    lastShutdownTime = DateTime.FromBinary(ticks);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"The decryption failed. {ex}");
+            }
+
+            return lastShutdownTime;
+        }
+
+        static void QuitGame()
+        {
+            // Release unsafe pointer
+            Marshal.FreeHGlobal(rectangle_ptr);
+
+            Save(DateTime.Now);
+            SDL_Quit();
+
+            Console.WriteLine("Program exited successfully!");
+            Environment.Exit(0);
         }
     }
 }
