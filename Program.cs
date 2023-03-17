@@ -1,4 +1,5 @@
 ﻿using static SDL2.SDL;
+using static SDL2.SDL_ttf;
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -17,6 +18,9 @@ namespace GotchiTaMm
     internal class Program
     {
         // GAME LOOP
+
+        const int WINDOW_W = 480;
+        const int WINDOW_H = 320;
 
         static bool Continue = true;
 
@@ -128,7 +132,7 @@ namespace GotchiTaMm
 
             Window = SDL_CreateWindow("GotchiTaMm!!!",
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                640, 480, SDL_WindowFlags.SDL_WINDOW_SHOWN);
+                WINDOW_W, WINDOW_H, SDL_WindowFlags.SDL_WINDOW_SHOWN);
 
             if (Window == IntPtr.Zero)
             {
@@ -144,6 +148,13 @@ namespace GotchiTaMm
                 Console.WriteLine(
                     $"There was an issue creating the renderer:\n{SDL_GetError()}");
             }
+
+            if(TTF_Init() < 0)
+            {
+                Console.WriteLine(
+                    $"There was an issue starting SDL_ttf:\n{SDL_GetError()}!");
+            }
+
         }
 
         static void Render()
@@ -167,6 +178,10 @@ namespace GotchiTaMm
             {
                 b.Draw();
             }
+
+            IntPtr texture_of = SDL_CreateTextureFromSurface(Renderer, UI.texts[0]);
+
+            Blit(texture_of, 0, 220);
 
             SDL_RenderPresent(Renderer);
         }
@@ -327,12 +342,22 @@ namespace GotchiTaMm
             return save;
         }
 
+        internal static void Blit(IntPtr texture, int x, int y)
+        {
+            SDL_Rect destination;
+            destination.x = x;
+            destination.y = y;
+            SDL_QueryTexture(texture, out uint format, out int access, out destination.w, out destination.h);
+            SDL_RenderCopy(Renderer, texture, IntPtr.Zero, ref destination);
+        }
+
         static void QuitGame(sbyte ProgramCode)
         {
             // Release unsafe pointer
             Marshal.FreeHGlobal(rectangle_ptr);
 
             SaveGame(DateTime.Now);
+            TTF_Quit();
             SDL_Quit();
 
             Console.WriteLine("Program exited successfully!");

@@ -1,4 +1,5 @@
 ﻿using static SDL2.SDL;
+using static SDL2.SDL_ttf;
 
 namespace GotchiTaMm
 {
@@ -15,6 +16,8 @@ namespace GotchiTaMm
     {
         internal static UserInterface? Instance { get; private set; }
         internal Button[] buttons = new Button[3];
+        internal IntPtr[] fonts = new IntPtr[3];
+        internal IntPtr[] texts = new IntPtr[3];
 
         private UserInterface()
         {
@@ -38,6 +41,18 @@ namespace GotchiTaMm
                     new SDL_Color { r = 0, g = 255, b = 0, a = 255 },
                     new SDL_Color { r = 255, g = 0, b = 0, a = 255 },
                 });
+
+            fonts[0] = TTF_OpenFont("blue_screen.ttf", 36);
+            if (fonts[0] == IntPtr.Zero)
+            {
+                Console.WriteLine("There was a problem loading the font");
+            }
+
+            texts[0] = TTF_RenderUTF8_Blended(fonts[0], "Test", new SDL_Color { r = 55, g = 0, b = 0, a = 255 });
+            if (texts[0] == IntPtr.Zero)
+            {
+                Console.WriteLine("There was a creating surface of text");
+            }
         }
 
         public static UserInterface GetUI()
