@@ -64,12 +64,18 @@ namespace GotchiTaMm
 
         public static SaveState Save;
 
+        // OTHER THREADS
+
+        static Thread counter;
+
         // Actual program starts here...
 
 
         static void Main(string[] args)
         {
             Setup();
+
+            counter = new Thread(() => CounterThread());
 
             Task<SaveState> LoadData = LoadGame();
             Save = LoadData.Result;
@@ -82,6 +88,8 @@ namespace GotchiTaMm
             {
                 Console.WriteLine($"The program was last shutdown at: {Save.LastTime}");
             }
+
+            counter.Start();
 
             int size = Marshal.SizeOf(my_rectangle2);
             rectangle_ptr = Marshal.AllocHGlobal(size);
@@ -206,6 +214,15 @@ namespace GotchiTaMm
             Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
         }
 
+        public static void CounterThread()
+        {
+            while(true)
+            {
+                Thread.Sleep(1000);
+                Console.WriteLine("A second has passed.");
+            }
+        }
+
         static void SaveGame(DateTime saveTime)
         {
             try
@@ -273,10 +290,6 @@ namespace GotchiTaMm
                     if (jsonString != "{}")
                     {
                         save = JsonSerializer.Deserialize<SaveState>(jsonString);
-                    }
-                    else
-                    {
-                        Console.WriteLine("DEBUG");
                     }
                 }
             }
