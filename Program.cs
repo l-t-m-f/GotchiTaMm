@@ -115,7 +115,7 @@ namespace GotchiTaMm
                 Render();
             }
 
-            QuitGame();
+            QuitGame(0);
         }
 
         static void Setup()
@@ -178,7 +178,7 @@ namespace GotchiTaMm
                 switch (e.type)
                 {
                     case SDL_EventType.SDL_QUIT:
-                        QuitGame();
+                        QuitGame(0);
                         break;
                     case SDL_EventType.SDL_MOUSEBUTTONDOWN:
                         MouseDownEvent?.Invoke(e.button);
@@ -207,7 +207,7 @@ namespace GotchiTaMm
 
             if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
             {
-                QuitGame();
+                QuitGame(0);
             }
         }
 
@@ -239,6 +239,12 @@ namespace GotchiTaMm
         {
             try
             {
+                if(Save == null)
+                {
+                    Console.WriteLine("Error! Attempting to save, but SaveState is corrupt.");
+                    QuitGame(-1);
+                    return;
+                }
                 Save.LastTime = saveTime;
 
                 using FileStream fileStream = new("MEM", FileMode.OpenOrCreate);
@@ -268,7 +274,7 @@ namespace GotchiTaMm
 
         static async Task<SaveState> LoadGame()
         {
-            SaveState save = new SaveState {
+            SaveState? save = new SaveState {
                 LastTime = DateTime.MinValue,
             };
 
@@ -310,10 +316,18 @@ namespace GotchiTaMm
                 Console.WriteLine($"The decryption failed. {ex}");
             }
 
+            if(save == null ) {
+
+                Console.WriteLine("Save is corrupt, therefore, must reset save.");
+                save = new SaveState {
+                    LastTime = DateTime.MinValue,
+                };
+            }
+
             return save;
         }
 
-        static void QuitGame()
+        static void QuitGame(sbyte ProgramCode)
         {
             // Release unsafe pointer
             Marshal.FreeHGlobal(rectangle_ptr);
@@ -322,7 +336,7 @@ namespace GotchiTaMm
             SDL_Quit();
 
             Console.WriteLine("Program exited successfully!");
-            Environment.Exit(0);
+            Environment.Exit(ProgramCode);
         }
     }
 }
