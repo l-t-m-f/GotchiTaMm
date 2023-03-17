@@ -22,8 +22,8 @@ namespace GotchiTaMm
 
         // SETUP
 
-        static IntPtr Window;
-        static IntPtr Renderer;
+        static internal IntPtr Window;
+        static internal IntPtr Renderer;
 
         // RENDER
 
@@ -41,10 +41,10 @@ namespace GotchiTaMm
         public delegate void KeysymDelegate(SDL_Keysym keysym);
         public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
 
-        public static event KeysymDelegate KeyDownEvent;
-        public static event KeysymDelegate KeyUpEvent;
-        public static event MouseButtonEventDelegate MouseDownEvent;
-        public static event MouseButtonEventDelegate MouseUpEvent;
+        public static event KeysymDelegate? KeyDownEvent;
+        public static event KeysymDelegate? KeyUpEvent;
+        public static event MouseButtonEventDelegate? MouseDownEvent;
+        public static event MouseButtonEventDelegate? MouseUpEvent;
 
         // ENCRYPTION
 
@@ -62,18 +62,25 @@ namespace GotchiTaMm
             public DateTime LastTime { get; set; }
         }
 
-        public static SaveState Save;
+        public static SaveState? Save;
 
         // OTHER THREADS
 
-        static Thread counter;
+        static Thread? counter;
+
+        // GUI
+
+        static UserInterface? UI;
 
         // Actual program starts here...
 
 
         static void Main(string[] args)
         {
+
             Setup();
+
+            UI = UserInterface.GetUI();
 
             counter = new Thread(() => CounterThread());
 
@@ -155,6 +162,11 @@ namespace GotchiTaMm
             SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
             // Draw with pointer to structure
             SDL_RenderFillRect(Renderer, rectangle_ptr);
+
+            foreach (Button b in UI.buttons)
+            {
+                b.Draw();
+            }
 
             SDL_RenderPresent(Renderer);
         }
