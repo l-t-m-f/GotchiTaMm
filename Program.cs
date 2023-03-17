@@ -2,9 +2,18 @@
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace GotchiTaMm
 {
+
+    /**
+     * @TODO: 
+     * 1. Make a SaveState class, serialize it to binary and encrypt to a file (do I need b64?)
+     * 2. Make button
+     */
+
     internal class Program
     {
         // GAME LOOP
@@ -44,21 +53,34 @@ namespace GotchiTaMm
                 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1
         };
 
+
+        // SAVING
+
+        [Serializable]
+        public class SaveState
+        {
+            public DateTime LastTime { get; set; }
+        }
+
+        public static SaveState Save;
+
         // Actual program starts here...
+
 
         static void Main(string[] args)
         {
             Setup();
 
-            Task<DateTime> lastShutdownTime = Load();
+            Task<SaveState> LoadData = LoadGame();
+            Save = LoadData.Result;
 
-            if (lastShutdownTime.Result == DateTime.MinValue)
+            if (Save.LastTime == DateTime.MinValue)
             {
                 Console.WriteLine("This is the first time the program has been run.");
             }
             else
             {
-                Console.WriteLine($"The program was last shutdown at: {lastShutdownTime.Result}");
+                Console.WriteLine($"The program was last shutdown at: {Save.LastTime}");
             }
 
             int size = Marshal.SizeOf(my_rectangle2);
@@ -184,10 +206,12 @@ namespace GotchiTaMm
             Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
         }
 
-        static void Save(DateTime lastShutdownTime)
+        static void SaveGame(DateTime saveTime)
         {
             try
             {
+                Save.LastTime = saveTime;
+
                 using FileStream fileStream = new("MEM", FileMode.OpenOrCreate);
                 using Aes aes = Aes.Create();
                 aes.Key = secret;
@@ -200,7 +224,10 @@ namespace GotchiTaMm
                     aes.CreateEncryptor(),
                     CryptoStreamMode.Write);
                 using StreamWriter encryptWriter = new(cryptoStream);
-                encryptWriter.WriteLine(lastShutdownTime.ToBinary());
+
+                string jsonString = JsonSerializer.Serialize(Save);
+                byte[] jsonData = Encoding.UTF8.GetBytes(jsonString);
+                cryptoStream.Write(jsonData, 0, jsonData.Length);
 
                 Console.WriteLine("The file was encrypted.");
             }
@@ -210,9 +237,11 @@ namespace GotchiTaMm
             }
         }
 
-        static async Task<DateTime> Load()
+        static async Task<SaveState> LoadGame()
         {
-            DateTime lastShutdownTime = DateTime.MinValue;
+            SaveState save = new SaveState {
+                LastTime = DateTime.MinValue,
+            };
 
             try
             {
@@ -235,10 +264,20 @@ namespace GotchiTaMm
                     }
 
                     using CryptoStream cryptoStream = new(fileStream, aes.CreateDecryptor(secret, iv), CryptoStreamMode.Read);
-                    using StreamReader decryptReader = new(cryptoStream);
-                    string decryptedMessage = await decryptReader.ReadToEndAsync();
-                    long ticks = long.Parse(decryptedMessage);
-                    lastShutdownTime = DateTime.FromBinary(ticks);
+
+                    using MemoryStream memoryStream = new();
+                    await cryptoStream.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+
+                    string jsonString = Encoding.UTF8.GetString(memoryStream.ToArray());
+                    if (jsonString != "{}")
+                    {
+                        save = JsonSerializer.Deserialize<SaveState>(jsonString);
+                    }
+                    else
+                    {
+                        Console.WriteLine("DEBUG");
+                    }
                 }
             }
             catch (Exception ex)
@@ -246,7 +285,7 @@ namespace GotchiTaMm
                 Console.WriteLine($"The decryption failed. {ex}");
             }
 
-            return lastShutdownTime;
+            return save;
         }
 
         static void QuitGame()
@@ -254,7 +293,7 @@ namespace GotchiTaMm
             // Release unsafe pointer
             Marshal.FreeHGlobal(rectangle_ptr);
 
-            Save(DateTime.Now);
+            SaveGame(DateTime.Now);
             SDL_Quit();
 
             Console.WriteLine("Program exited successfully!");
