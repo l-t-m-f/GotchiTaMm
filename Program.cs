@@ -1,4 +1,5 @@
 ﻿using static SDL2.SDL;
+using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
 
 using System.Runtime.InteropServices;
@@ -163,6 +164,15 @@ namespace GotchiTaMm
                 Console.WriteLine(
                     $"There was an issue starting SDL_ttf:\n{SDL_GetError()}!");
             }
+
+            IMG_InitFlags img_flags = IMG_InitFlags.IMG_INIT_PNG;
+            if(IMG_Init(img_flags) != (int)img_flags)
+            {
+                Console.WriteLine(
+                    $"There was an issue starting SDL_image:\n{SDL_GetError()}!");
+            }
+
+
 
         }
 

@@ -1,5 +1,5 @@
-﻿using System.Drawing;
-using static SDL2.SDL;
+﻿using static SDL2.SDL;
+using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
 
 namespace GotchiTaMm
@@ -21,6 +21,7 @@ namespace GotchiTaMm
         internal Button[] Buttons = new Button[3];
         internal IntPtr[] Fonts = new IntPtr[3];
         internal IntPtr[] Texts = new IntPtr[3];
+        internal IntPtr[] Images = new IntPtr[8];
 
         private UserInterface()
         {
@@ -63,6 +64,15 @@ namespace GotchiTaMm
             {
                 Console.WriteLine("There was a creating surface of text");
             }
+
+            Images[0] = IMG_LoadTexture(Program.Renderer, "gfx/Attention.png");
+            Images[1] = IMG_LoadTexture(Program.Renderer, "gfx/Bathroom.png");
+            Images[2] = IMG_LoadTexture(Program.Renderer, "gfx/Food.png");
+            Images[3] = IMG_LoadTexture(Program.Renderer, "gfx/Game.png");
+            Images[4] = IMG_LoadTexture(Program.Renderer, "gfx/Lights.png");
+            Images[5] = IMG_LoadTexture(Program.Renderer, "gfx/Medicine.png");
+            Images[6] = IMG_LoadTexture(Program.Renderer, "gfx/Status.png");
+            Images[7] = IMG_LoadTexture(Program.Renderer, "gfx/Training.png");
         }
 
         public static UserInterface GetUI()
@@ -83,6 +93,15 @@ namespace GotchiTaMm
             foreach (Button b in Buttons)
             {
                 b.Draw();
+            }
+
+            int x = 0;
+            int y = 0;
+
+            foreach(IntPtr i in Images)
+            {
+                Program.Blit(i, 50 * x, 25 * y);
+                x++; y++;
             }
         }
     }
