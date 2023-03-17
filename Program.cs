@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.ComponentModel;
+using System.Reflection;
 
 namespace GotchiTaMm
 {
@@ -141,9 +143,6 @@ namespace GotchiTaMm
                 Console.WriteLine(
                     $"There was an issue starting SDL_image:\n{SDL_GetError()}!");
             }
-
-
-
         }
         static void Render()
         {
@@ -164,7 +163,7 @@ namespace GotchiTaMm
             //// Draw with pointer to structure
             //SDL_RenderFillRect(Renderer, rectangle_ptr);
 
-            Blit(UI.TextImages.GetValueOrDefault("Test"), 0, 220);
+            Blit(UI.TextImages.GetValueOrDefault(0), 0, 220);
 
             //SDL_SetRenderDrawColor(Renderer, 0, 255, 255, 255);
             //FillEllipsoid(my_circle);
@@ -436,6 +435,13 @@ namespace GotchiTaMm
             SDL_RenderCopy(Renderer, texture, IntPtr.Zero, ref destination);
         }
 
+        internal static void BlitRect(IntPtr texture, SDL_Rect rect)
+        {
+            SDL_RenderCopy(Renderer, texture, IntPtr.Zero, ref rect);
+        }
+
+
+
         static void QuitGame(sbyte ProgramCode)
         {
             // Release unsafe pointer
@@ -447,6 +453,18 @@ namespace GotchiTaMm
 
             Console.WriteLine("Program exited successfully!");
             Environment.Exit(ProgramCode);
+        }
+    }
+
+    public static class Util
+    {
+        public static string GetDescription<T>(this T e) where T : Enum
+        {
+            var descriptionAttribute = e.GetType()
+                                          .GetMember(e.ToString())
+                                          .FirstOrDefault()
+                                          ?.GetCustomAttribute<DescriptionAttribute>();
+            return descriptionAttribute?.Description ?? e.ToString();
         }
     }
 }
