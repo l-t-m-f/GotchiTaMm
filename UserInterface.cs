@@ -196,7 +196,7 @@ namespace GotchiTaMm
             }
         }
 
-        public static UserInterface GetUI()
+        public static UserInterface Get()
         {
             if (Instance == null)
             {

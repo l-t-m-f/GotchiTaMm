@@ -62,10 +62,7 @@ namespace GotchiTaMm
         {
 
             Setup();
-
-            Game = new Game();
-
-            UI = UserInterface.GetUI();
+            UI = UserInterface.Get();
 
             counter = new Thread(() => CounterThread());
 
@@ -81,14 +78,10 @@ namespace GotchiTaMm
                 Console.WriteLine($"The program was last shutdown at: {Save.LastTime}");
             }
 
+            Game = Game.Get(Save);
+
             counter.Start();
 
-            //int size = Marshal.SizeOf(my_rectangle2);
-            //rectangle_ptr = Marshal.AllocHGlobal(size);
-            //Marshal.StructureToPtr(my_rectangle2, rectangle_ptr, false);
-
-            // Subscribe the respective methods to the events
-            // Methods have to respect the delegate definition
             KeyDownEvent += OnKeyDown;
             KeyUpEvent += OnKeyUp;
             MouseDownEvent += OnMouseDown;
