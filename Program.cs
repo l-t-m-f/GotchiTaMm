@@ -146,9 +146,6 @@ namespace GotchiTaMm
             SDL_SetRenderDrawColor(Renderer, 155, 155, 155, 255);
             SDL_RenderClear(Renderer);
 
-            SDL_SetRenderDrawColor(Renderer, 125, 205, 235, 255);
-            SDL_RenderDrawLine(Renderer, 5, 5, 300, 310);
-
             Game.Draw();
             UI.Draw();
 
@@ -319,7 +316,7 @@ namespace GotchiTaMm
         public static void DrawEllipsoid(SDL_Rect circle)
         {
             double pih = Math.PI / 2;
-            const int prec = 150; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
+            const int prec = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
             double theta = 0; // angle that will be increased each loop
 
             int x = (int)(circle.w * Math.Cos(theta));//start point
@@ -359,7 +356,7 @@ namespace GotchiTaMm
         public static void FillEllipsoid(SDL_Rect circle)
         {
             double pih = Math.PI / 2;
-            const int prec = 150; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
+            const int prec = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
             double theta = 0; // angle that will be increased each loop
 
             int x = (int)(circle.w * Math.Cos(theta));//start point

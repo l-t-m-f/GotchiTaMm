@@ -68,6 +68,12 @@ namespace GotchiTaMm
                         Blit(UI.TextVars.GetValueOrDefault(TextVarNameType.TimeStart), 275, 144);
                     }
                 }
+                SDL_Rect circle = new SDL_Rect {
+                    x = 150, y = 150, w = 50, h = 70,
+                };
+
+                SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255);
+                FillEllipsoid(circle);
 
             }
             else if (GameState is TimeSetPauseState)

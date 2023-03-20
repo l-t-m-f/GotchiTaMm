@@ -1,4 +1,5 @@
-﻿using static SDL2.SDL;
+﻿using System.Text.RegularExpressions;
+using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
 
@@ -58,6 +59,9 @@ namespace GotchiTaMm
             }
         }
 
+        string H24ClockRegex = @"^([01]\d|2[0-3]):([0-5]\d)$";
+        Regex ClockRegex;
+
         const int MAX_FONT_SIZE_FACTOR = 12;
 
         internal bool DrawPictos = false;
@@ -79,6 +83,7 @@ namespace GotchiTaMm
 
         private UserInterface()
         {
+            ClockRegex = new Regex(H24ClockRegex);
             InitButtonsSubroutine();
             InitFontsSubroutine();
             InitTextImagesSubroutine();
@@ -277,6 +282,23 @@ namespace GotchiTaMm
         private void Select()
         {
             Console.WriteLine("Select!");
+
+            if (Game.Instance is null) return;
+
+            if(Game.Instance.GameState is GameStartState)
+            {
+                if(ClockRegex.IsMatch(Game.Instance.current_input) == true)
+                {
+                    DrawPictos = true;
+                    Game.Instance.GameState = new GotchiPetViewState();
+                }
+                else
+                {
+                    Game.Instance.current_input = "";
+                    SetOrUpdateTextVar(TextVarNameType.TimeStart, Game.Instance.current_input, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                }
+            }
+
         }
         private void Execute()
         {
