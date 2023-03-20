@@ -2,7 +2,7 @@
 using static SDL2.SDL;
 
 namespace GotchiTaMm
-{ 
+{
 
     internal class Game
     {
@@ -61,11 +61,11 @@ namespace GotchiTaMm
             {
                 if (UI != null)
                 {
-                    Blit(UI.TextImages.GetValueOrDefault(1), 40, 120);
+                    Blit(UI.TextImages.GetValueOrDefault(1), 260, 120);
 
                     if (UI.TextVars.Count > 0)
                     {
-                        Blit(UI.TextVars.GetValueOrDefault(TextVarNameType.TimeStart), 60, 190);
+                        Blit(UI.TextVars.GetValueOrDefault(TextVarNameType.TimeStart), 275, 144);
                     }
                 }
 
@@ -98,11 +98,32 @@ namespace GotchiTaMm
                 if (GameState is GameStartState)
                 {
 
-                    if(char.IsAsciiDigit((char)keysym.sym))
+                    if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_BACKSPACE)
                     {
+                        if (current_input.Length == 0) return;
+
+                        if (current_input.Length == 4)
+                        {
+                            current_input = current_input.DropLastChar();
+                        }
+                        current_input = current_input.DropLastChar();
+
+                        UI?.SetOrUpdateTextVar(TextVarNameType.TimeStart, current_input, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                    }
+
+                    if (current_input.Length > 4) return;
+
+                    if (char.IsAsciiDigit((char)keysym.sym))
+                    {
+                        if (current_input.Length == 2)
+                        {
+                            current_input += ':';
+                        }
+
                         current_input += (char)keysym.sym;
-                        UI?.SetOrUpdateTextVar(TextVarNameType.TimeStart, current_input, FontNameType.RainyHearts, 4, new SDL_Color { r = 255, g = 0, b = 0, a = 255 });
-                    }                        
+
+                        UI?.SetOrUpdateTextVar(TextVarNameType.TimeStart, current_input, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                    }
 
                     Console.WriteLine(current_input);
                 }
@@ -130,11 +151,12 @@ namespace GotchiTaMm
 
         public void OnMouseDown(SDL_MouseButtonEvent mouseButtonEvent)
         {
-            //Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
+            Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
             if (mouseButtonEvent.button <= 3)
             {
                 Mouse.Buttons[mouseButtonEvent.button] = 1;
             }
+
         }
 
         public void OnMouseUp(SDL_MouseButtonEvent mouseButtonEvent)
@@ -152,36 +174,4 @@ namespace GotchiTaMm
             Mouse.Position.y = mouseMotionEvent.y;
         }
     }
-
-    internal abstract class GameState
-    {
-
-    }
-
-    internal class GameStartState : GameState
-    {
-
-    }
-
-    internal class TimeSetPauseState : GameState
-    {
-
-    }
-
-    internal class GotchiPetViewState : GameState
-    {
-
-    }
-
-    internal class GotchiPetEvolveState : GameState
-    {
-
-    }
-
-    internal class GotchiGameState : GameState
-    {
-
-    }
-
-
 }

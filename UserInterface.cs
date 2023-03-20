@@ -36,6 +36,13 @@ namespace GotchiTaMm
 
     }
 
+    internal enum ButtonNameType
+    {
+        Select = 0,
+        Execute,
+        Cancel,
+    }
+
     internal class UserInterface
     {
 
@@ -53,10 +60,12 @@ namespace GotchiTaMm
 
         const int MAX_FONT_SIZE_FACTOR = 12;
 
+        internal bool DrawPictos = false;
+
         internal SDL_Rect Header = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
         internal SDL_Rect Footer = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
         internal static UserInterface? Instance { get; private set; }
-        internal List<Button> Buttons = new List<Button>();
+        internal Dictionary<ButtonNameType, Button> Buttons = new Dictionary<ButtonNameType, Button>();
 
         internal Dictionary<string, PackedImage> Images = new Dictionary<string, PackedImage>();
 
@@ -83,29 +92,29 @@ namespace GotchiTaMm
                     new SDL_Color { r = 255, g = 0, b = 0, a = 255 },
                 };
 
-            Buttons.Add(new Button(new SDL_Rect {
+            Buttons.Add(ButtonNameType.Select, new Button(new SDL_Rect {
                 x = ((Program.WINDOW_W / 5) * 1) - 20,
                 y = Program.WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme));
+                button_color_theme, Select));
 
-            Buttons.Add(new Button(new SDL_Rect {
+            Buttons.Add(ButtonNameType.Execute, new Button(new SDL_Rect {
                 x = (Program.WINDOW_W / 2) - 20,
                 y = Program.WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme));
+                button_color_theme, Execute));
 
-            Buttons.Add(new Button(new SDL_Rect {
+            Buttons.Add(ButtonNameType.Cancel, new Button(new SDL_Rect {
                 x = ((Program.WINDOW_W / 5) * 4) - 20,
                 y = Program.WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme));
+                button_color_theme, Cancel));
         }
 
 
@@ -219,10 +228,12 @@ namespace GotchiTaMm
             SDL_RenderFillRect(Program.Renderer, ref Header);
             SDL_RenderFillRect(Program.Renderer, ref Footer);
 
-            foreach (Button b in Buttons)
+            foreach (Button b in Buttons.Values)
             {
                 b.Draw();
             }
+
+            if (DrawPictos == false) return;
 
             foreach (PackedImage i in Images.Values)
             {
@@ -262,56 +273,18 @@ namespace GotchiTaMm
             TextVars.Remove(text_var_label_to_update);
             SetTextVar(text_var_label_to_update, new_text, new_font_name, new_font_size_factor, new_color);
         }
-    }
 
-    internal class Button
-    {
-        internal SDL_Rect Rectangle;
-        internal SDL_Color[] Color = new SDL_Color[2];
-        internal ButtonStateType ButtonState;
-
-        public Button(SDL_Rect rectangle, SDL_Color[] color)
+        private void Select()
         {
-            Rectangle = rectangle;
-            Color = color;
-            ButtonState = ButtonStateType.Unselected;
+            Console.WriteLine("Select!");
         }
-
-        public void Draw()
+        private void Execute()
         {
-            if (TestMouseOverlap() == true)
-            {
-                if (Program.Mouse.Buttons[1] == 1)
-                {
-                    SDL_SetRenderDrawColor(Program.Renderer, 255, 0, Color[0].b, Color[0].a);
-                }
-                else
-                {
-                    SDL_SetRenderDrawColor(Program.Renderer, 255, 255, Color[0].b, Color[0].a);
-                }
-            }
-            else
-            {
-
-                SDL_SetRenderDrawColor(Program.Renderer, Color[0].r, Color[0].g, Color[0].b, Color[0].a);
-            }
-
-            SDL_RenderFillRect(Program.Renderer, ref Rectangle);
-
-            SDL_SetRenderDrawColor(Program.Renderer, Color[1].r, Color[1].g, Color[1].b, Color[1].a);
-            SDL_RenderDrawRect(Program.Renderer, ref Rectangle);
+            Console.WriteLine(value: "Execute!");
         }
-
-        public bool TestMouseOverlap()
+        private void Cancel()
         {
-            if (Program.Mouse.Position.x > Rectangle.x
-                && Program.Mouse.Position.x < Rectangle.x + Rectangle.w
-                && Program.Mouse.Position.y > Rectangle.y
-                && Program.Mouse.Position.y < Rectangle.y + Rectangle.h)
-            {
-                return true;
-            }
-            return false;
+            Console.WriteLine("Cancel!");
         }
-    }
+    }    
 }

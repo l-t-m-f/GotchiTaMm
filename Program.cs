@@ -27,6 +27,7 @@ namespace GotchiTaMm
             internal static int[] Buttons = new int[4];
         }
 
+        public delegate void VoidDelegate();
         public delegate void KeysymDelegate(SDL_Keysym keysym);
         public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
         public delegate void MouseMotionEventDelegate(SDL_MouseMotionEvent mouseMotionEvent);
@@ -94,6 +95,7 @@ namespace GotchiTaMm
             {
                 Input();
                 Render();
+                Logic();
             }
 
             QuitGame(0);
@@ -180,6 +182,25 @@ namespace GotchiTaMm
                     default:
                         // error...
                         break;
+                }
+            }
+        }
+
+        static void Logic()
+        {
+            if (UI is null) return;
+
+            if (Mouse.Buttons[1] == 1)
+            {
+                foreach(Button b in UI.Buttons.Values)
+                {
+                    if (b.TestMouseOverlap() == true)
+                    {
+                        b.Activate();
+                        Mouse.Buttons[1] = 0;
+                        break;
+                    }
+
                 }
             }
         }
@@ -415,6 +436,15 @@ namespace GotchiTaMm
                                           .FirstOrDefault()
                                           ?.GetCustomAttribute<DescriptionAttribute>();
             return descriptionAttribute?.Description ?? e.ToString();
+        }
+    }
+
+    public static class StringExt
+    {
+        public static string DropLastChar(this string value)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length == 1 ? "" : value.Substring(0, value.Length-1);
         }
     }
 }
