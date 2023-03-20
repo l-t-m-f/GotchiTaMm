@@ -53,7 +53,7 @@ namespace GotchiTaMm
         internal int EvolutionScore = 0;
         internal LifeStageType LifeStage = LifeStageType.Egg;
 
-        public void Draw()
+        public void Animate()
         {
 
         }

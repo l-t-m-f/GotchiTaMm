@@ -37,8 +37,8 @@ namespace GotchiTaMm
         public static event MouseButtonEventDelegate? MouseUpEvent;
         public static event MouseMotionEventDelegate? MouseMotionEvent;
 
-        static SaveState Save;
-        static Game Game;
+        static SaveState? Save;
+        static Game? Game;
 
         // ENCRYPTION
 
@@ -49,14 +49,14 @@ namespace GotchiTaMm
 
         // OTHER THREADS
 
-        static Thread? counter;
+        static Thread? Clock;
+        static Thread? Animate;
 
         // GUI
 
-        static UserInterface? UI;
+        static internal UserInterface? UI;
 
                 // Actual program starts here...
-
 
         static void Main(string[] args)
         {
@@ -64,7 +64,8 @@ namespace GotchiTaMm
             Setup();
             UI = UserInterface.Get();
 
-            counter = new Thread(() => CounterThread());
+            Clock = new Thread(() => ClockThread());
+            Animate = new Thread(() => AnimateThread());
 
             Task<SaveState> LoadData = LoadGame();
             Save = LoadData.Result;
@@ -80,13 +81,14 @@ namespace GotchiTaMm
 
             Game = Game.Get(Save);
 
-            counter.Start();
+            Clock.Start();
+            Animate.Start();
 
-            KeyDownEvent += OnKeyDown;
-            KeyUpEvent += OnKeyUp;
-            MouseDownEvent += OnMouseDown;
-            MouseUpEvent += OnMouseUp;
-            MouseMotionEvent += OnMouseMove;
+            KeyDownEvent += Game.OnKeyDown;
+            KeyUpEvent += Game.OnKeyUp;
+            MouseDownEvent += Game.OnMouseDown;
+            MouseUpEvent += Game.OnMouseUp;
+            MouseMotionEvent += Game.OnMouseMove;
 
             while (Game.Continue)
             {
@@ -145,21 +147,8 @@ namespace GotchiTaMm
             SDL_SetRenderDrawColor(Renderer, 125, 205, 235, 255);
             SDL_RenderDrawLine(Renderer, 5, 5, 300, 310);
 
-            Game.Pet.Draw();
+            Game.Draw();
             UI.Draw();
-
-            //SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 255);
-            //// Draw with structure ref
-            //SDL_RenderFillRect(Renderer, ref my_rectangle);
-
-            //SDL_SetRenderDrawColor(Renderer, 0, 255, 0, 255);
-            //// Draw with pointer to structure
-            //SDL_RenderFillRect(Renderer, rectangle_ptr);
-
-            Blit(UI.TextImages.GetValueOrDefault(0), 0, 220);
-
-            //SDL_SetRenderDrawColor(Renderer, 0, 255, 255, 255);
-            //FillEllipsoid(my_circle);
 
             SDL_RenderPresent(Renderer);
         }
@@ -195,53 +184,21 @@ namespace GotchiTaMm
             }
         }
 
-        public static void OnKeyDown(SDL_Keysym keysym)
-        {
-            Console.WriteLine($"Key down: {keysym.scancode}");
-            Keyboard[(int)keysym.scancode] = 1;
-
-            if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
-            {
-                QuitGame(0);
-            }
-        }
-
-        public static void OnKeyUp(SDL_Keysym keysym)
-        {
-            Console.WriteLine($"Key up: {keysym.scancode}");
-            Keyboard[(int)keysym.scancode] = 0;
-        }
-
-        public static void OnMouseDown(SDL_MouseButtonEvent mouseButtonEvent)
-        {
-            Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
-            if (mouseButtonEvent.button <= 3)
-            {
-                Mouse.Buttons[mouseButtonEvent.button] = 1;
-            }
-        }
-
-        public static void OnMouseUp(SDL_MouseButtonEvent mouseButtonEvent)
-        {
-            Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
-            if (mouseButtonEvent.button <= 3)
-            {
-                Mouse.Buttons[mouseButtonEvent.button] = 0;
-            }
-        }
-        public static void OnMouseMove(SDL_MouseMotionEvent mouseMotionEvent)
-        {
-            Console.WriteLine($"Mouse moving at {mouseMotionEvent.x}, {mouseMotionEvent.y}");
-            Mouse.Position.x = mouseMotionEvent.x;
-            Mouse.Position.y = mouseMotionEvent.y;
-        }
-
-        public static void CounterThread()
+        public static void ClockThread()
         {
             while (true)
             {
                 Thread.Sleep(1000);
                 Console.WriteLine("A second has passed.");
+            }
+        }
+
+        public static void AnimateThread()
+        {
+            while(true)
+            {
+                Thread.Sleep((1 / 60) * 100);
+                Game.Pet.Animate();
             }
         }
 
@@ -435,7 +392,7 @@ namespace GotchiTaMm
 
 
 
-        static void QuitGame(sbyte ProgramCode)
+        internal static void QuitGame(sbyte ProgramCode)
         {
             // Release unsafe pointer
             //Marshal.FreeHGlobal(rectangle_ptr);

@@ -27,6 +27,13 @@ namespace GotchiTaMm
     internal enum FontNameType
     {
         BlueScreen = 0,
+        RainyHearts,
+    }
+
+    internal enum TextVarNameType
+    {
+        TimeStart = 0,
+
     }
 
     internal class UserInterface
@@ -53,33 +60,13 @@ namespace GotchiTaMm
 
         internal Dictionary<string, PackedImage> Images = new Dictionary<string, PackedImage>();
 
-        internal Dictionary<string, IntPtr[]> Fonts = new Dictionary<string, IntPtr[]>();
+        internal Dictionary<FontNameType, IntPtr[]> Fonts = new Dictionary<FontNameType, IntPtr[]>();
+
         internal Dictionary<int, IntPtr> Texts = new Dictionary<int, IntPtr>();
         internal Dictionary<int, IntPtr> TextImages = new Dictionary<int, IntPtr>();
 
-        internal static class GameStringPool
-        {
-
-            internal class StringPoolEntry
-            {
-                internal string Text;
-                internal FontNameType Font;
-                internal int SizeFactor;
-
-                public StringPoolEntry(string text, FontNameType font, int sizeFactor)
-                {
-                    Text = text;
-                    Font = font;
-                    SizeFactor = sizeFactor;
-                }
-            }
-
-            internal static List<StringPoolEntry> Data = new List<StringPoolEntry>()
-            {
-                new("Test", FontNameType.BlueScreen, 4),
-            };
-        }
-
+        // Dictionary of "TextVar", which are just text SDL_texture coming from user input.
+        internal Dictionary<TextVarNameType, IntPtr> TextVars = new Dictionary<TextVarNameType, IntPtr>();
 
         private UserInterface()
         {
@@ -121,14 +108,34 @@ namespace GotchiTaMm
                 button_color_theme));
         }
 
+
+        private IntPtr CreateTextTexturePointer(string text, FontNameType font_name, int font_size_factor = 4, SDL_Color color = new SDL_Color())
+        {
+            IntPtr fontToUse = Fonts.GetValueOrDefault(font_name)[font_size_factor];
+
+            IntPtr renderedTextSurface = TTF_RenderUTF8_Blended(fontToUse, text, color);
+            if (renderedTextSurface == IntPtr.Zero)
+            {
+                Console.WriteLine("There was a problem creating textvar pointer");
+            }
+
+            IntPtr textTexture = SDL_CreateTextureFromSurface(Program.Renderer, renderedTextSurface);
+            if (textTexture == IntPtr.Zero)
+            {
+                Console.WriteLine("There was a problem creating text image pointer");
+            }
+
+            return textTexture;
+        }
+
         private void InitFontsSubroutine()
         {
             int fontCount = Enum.GetValues(typeof(FontNameType)).Length;
             for (int i = 0 ; i < fontCount ; i++)
             {
-                Fonts?.Add(((FontNameType)i).ToString(), new IntPtr[MAX_FONT_SIZE_FACTOR]);
+                Fonts?.Add(((FontNameType)i), new IntPtr[MAX_FONT_SIZE_FACTOR]);
 
-                for (int j = 0 ; j < Fonts?.GetValueOrDefault(((FontNameType)i).ToString())?.GetLength(0) ; j++)
+                for (int j = 0 ; j < Fonts?.GetValueOrDefault(((FontNameType)i))?.GetLength(0) ; j++)
                 {
                     IntPtr lastFont = TTF_OpenFont($"{(FontNameType)i}.ttf", (int)Math.Pow(2, j));
                     if (lastFont == IntPtr.Zero)
@@ -136,7 +143,7 @@ namespace GotchiTaMm
                         Console.WriteLine("There was a problem loading the font");
                     }
 
-                    IntPtr[]? fontsArray = Fonts?.GetValueOrDefault(((FontNameType)i).ToString());
+                    IntPtr[]? fontsArray = Fonts?.GetValueOrDefault(((FontNameType)i));
                     if (fontsArray != null) fontsArray[j] = lastFont;
                 }
             }
@@ -148,7 +155,7 @@ namespace GotchiTaMm
 
             for (int i = 0 ; i < stringPoolLen ; i++)
             {
-                string fontName = GameStringPool.Data[i].Font.ToString();
+                FontNameType fontName = GameStringPool.Data[i].Font;
                 int fontSizeFac = GameStringPool.Data[i].SizeFactor;
                 IntPtr fontToUse = Fonts.GetValueOrDefault(fontName)[fontSizeFac];
 
@@ -168,6 +175,7 @@ namespace GotchiTaMm
                 TextImages.Add(i, testTextImage);
             }
         }
+
 
         private void InitImagesSubroutine()
         {
@@ -189,7 +197,7 @@ namespace GotchiTaMm
                 }
                 else
                 {
-                    imageRect = new SDL_Rect { x = 80 + (100 * (i-4)), y = 200, w = 40, h = 30 };
+                    imageRect = new SDL_Rect { x = 80 + (100 * (i - 4)), y = 200, w = 40, h = 30 };
                 }
 
                 Images.Add(lastPictoName, new PackedImage(imagePtr, imageRect));
@@ -220,6 +228,39 @@ namespace GotchiTaMm
             {
                 Program.BlitRect(i.Pointer, i.Rectangle);
             }
+        }
+
+        // TEXTVARS
+
+        // Verifies if a new textVar exists and if so, update it to the new text and optional styling.
+        internal void UpdateTextVar(TextVarNameType text_var_label_to_update, string new_text, FontNameType new_font_name, int new_font_size_factor = 4, SDL_Color new_color = new SDL_Color())
+        {
+            if (TextVars.ContainsKey(text_var_label_to_update) == false)
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "You requested to modify a TextVar which does not exist.");
+                return;
+            }
+
+            TextVars.Remove(text_var_label_to_update);
+            SetTextVar(text_var_label_to_update, new_text, new_font_name, new_font_size_factor, new_color);
+        }
+
+        internal void SetTextVar(TextVarNameType text_var_label, string text, FontNameType font_name, int font_size_factor = 4, SDL_Color color = new SDL_Color())
+        {
+
+            IntPtr texture = CreateTextTexturePointer(text, font_name, font_size_factor, color);
+
+            if (texture == IntPtr.Zero)
+            {
+                Console.WriteLine("Update to text var failed.");
+                return;
+            }
+            TextVars.Add(text_var_label, texture);
+        }
+        internal void SetOrUpdateTextVar(TextVarNameType text_var_label_to_update, string new_text, FontNameType new_font_name, int new_font_size_factor = 4, SDL_Color new_color = new SDL_Color())
+        {
+            TextVars.Remove(text_var_label_to_update);
+            SetTextVar(text_var_label_to_update, new_text, new_font_name, new_font_size_factor, new_color);
         }
     }
 
