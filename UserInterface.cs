@@ -135,7 +135,7 @@ namespace GotchiTaMm
 
                 for (int j = 0 ; j < fontsDictio?.GetValueOrDefault(((FontNameType)i))?.GetLength(0) ; j++)
                 {
-                    IntPtr lastFont = TTF_OpenFont($"{(FontNameType)i}.ttf", (int)Math.Pow(2, j));
+                    IntPtr lastFont = TTF_OpenFont($"fonts/{(FontNameType)i}.ttf", (int)Math.Pow(2, j));
                     if (lastFont == IntPtr.Zero)
                     {
                         Console.WriteLine("There was a problem loading the font");

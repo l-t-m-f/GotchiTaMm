@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="BlueScreen.ttf">
+    <None Update="fonts\BlueScreen.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="gfx\Attention.png">
@@ -46,7 +46,7 @@
     <None Update="gfx\Training.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="RainyHearts.ttf">
+    <None Update="fonts\RainyHearts.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
