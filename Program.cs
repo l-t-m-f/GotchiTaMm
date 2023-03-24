@@ -15,17 +15,8 @@ namespace GotchiTaMm
     {
         internal const int WINDOW_W = 480;
         internal const int WINDOW_H = 320;
-
         static internal IntPtr Window;
-        static internal IntPtr Renderer;
-
-        internal static int[] Keyboard = new int[255];
-
-        public static class Mouse
-        {
-            internal static SDL_Point Position = new SDL_Point();
-            internal static int[] Buttons = new int[4];
-        }
+        static internal IntPtr Renderer;        
 
         public delegate void VoidDelegate();
         public delegate void KeysymDelegate(SDL_Keysym keysym);
@@ -39,7 +30,6 @@ namespace GotchiTaMm
         public static event MouseMotionEventDelegate? MouseMotionEvent;
 
         static SaveState? Save;
-        static Game? Game;
 
         // ENCRYPTION
 
@@ -53,17 +43,14 @@ namespace GotchiTaMm
         static Thread? Clock;
         static Thread? Animate;
 
-        // GUI
 
-        static internal UserInterface? UI;
+        internal static bool Continue = true;
 
-                // Actual program starts here...
 
         static void Main(string[] args)
         {
 
             Setup();
-            UI = UserInterface.Get();
 
             Clock = new Thread(() => ClockThread());
             Animate = new Thread(() => AnimateThread());
@@ -80,18 +67,16 @@ namespace GotchiTaMm
                 Console.WriteLine($"The program was last shutdown at: {Save.LastTime}");
             }
 
-            Game = Game.Get(Save);
-
             Clock.Start();
             Animate.Start();
 
-            KeyDownEvent += Game.OnKeyDown;
-            KeyUpEvent += Game.OnKeyUp;
-            MouseDownEvent += Game.OnMouseDown;
-            MouseUpEvent += Game.OnMouseUp;
-            MouseMotionEvent += Game.OnMouseMove;
+            KeyDownEvent += InputSystem.Instance.OnKeyDown;
+            KeyUpEvent += InputSystem.Instance.OnKeyUp;
+            MouseDownEvent += InputSystem.Instance.OnMouseDown;
+            MouseUpEvent += InputSystem.Instance.OnMouseUp;
+            MouseMotionEvent += InputSystem.Instance.OnMouseMove;
 
-            while (Game.Continue)
+            while (Continue)
             {
                 Input();
                 Render();
@@ -146,8 +131,8 @@ namespace GotchiTaMm
             SDL_SetRenderDrawColor(Renderer, 155, 155, 155, 255);
             SDL_RenderClear(Renderer);
 
-            Game.Draw();
-            UI.Draw();
+            Game.Instance.Draw();
+            UserInterface.Instance.Draw();
 
             SDL_RenderPresent(Renderer);
         }
@@ -185,16 +170,14 @@ namespace GotchiTaMm
 
         static void Logic()
         {
-            if (UI is null) return;
-
-            if (Mouse.Buttons[1] == 1)
+            if (InputSystem.Instance.mouse.buttons[1] == 1)
             {
-                foreach(Button b in UI.Buttons.Values)
+                foreach(Button b in UserInterface.Instance.Buttons.Values)
                 {
                     if (b.TestMouseOverlap() == true)
                     {
                         b.Activate();
-                        Mouse.Buttons[1] = 0;
+                        InputSystem.Instance.mouse.buttons[1] = 0;
                         break;
                     }
 
@@ -207,6 +190,9 @@ namespace GotchiTaMm
             while (true)
             {
                 Thread.Sleep(1000);
+
+
+
                 Console.WriteLine("A second has passed.");
             }
         }
@@ -216,7 +202,7 @@ namespace GotchiTaMm
             while(true)
             {
                 Thread.Sleep((1 / 60) * 100);
-                Game.Pet.Animate();
+                Game.Instance.pet.Animate();
             }
         }
 

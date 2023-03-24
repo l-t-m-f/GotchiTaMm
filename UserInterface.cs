@@ -5,66 +5,49 @@ using static SDL2.SDL_ttf;
 
 namespace GotchiTaMm
 {
-
-    internal enum ButtonStateType
-    {
-        Unselected = 0,
-        Selected,
-        Activated,
-    }
-
-    internal enum PictoNameType
-    {
-        Attention = 0,
-        Bathroom,
-        Food,
-        Game,
-        Lights,
-        Medicine,
-        Status,
-        Training,
-    }
-
-    internal enum FontNameType
-    {
-        BlueScreen = 0,
-        RainyHearts,
-    }
-
-    internal enum TextVarNameType
-    {
-        TimeStart = 0,
-
-    }
-
-    internal enum ButtonNameType
-    {
-        Select = 0,
-        Execute,
-        Cancel,
-    }
-
     internal class UserInterface
     {
 
-        internal struct PackedImage
+        //Singleton
+        internal static readonly Lazy<UserInterface> lazyInstance = new Lazy<UserInterface>(() => new UserInterface());
+        private UserInterface()
         {
-            internal IntPtr Pointer;
-            internal SDL_Rect Rectangle;
+            ClockRegex = new Regex(H24ClockRegex);
+            InitButtonsSubroutine();
+            InitFontsSubroutine();
+            InitTextImagesSubroutine();
+            InitImagesSubroutine();
+        }
 
-            public PackedImage(IntPtr pointer, SDL_Rect rect)
-            {
-                Pointer = pointer;
-                Rectangle = rect;
+        public static UserInterface Instance {
+            get {
+                return lazyInstance.Value;
             }
         }
 
+        //
+
         string H24ClockRegex = @"^([01]\d|2[0-3]):([0-5]\d)$";
         Regex ClockRegex;
-
         const int MAX_FONT_SIZE_FACTOR = 12;
 
         internal bool DrawPictos = false;
+
+        internal SDL_Rect Header = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
+        internal SDL_Rect Footer = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
+
+        internal Dictionary<ButtonNameType, Button> Buttons = new Dictionary<ButtonNameType, Button>();
+
+        internal Dictionary<string, PackedImage> Images = new Dictionary<string, PackedImage>();
+
+        internal Dictionary<FontNameType, IntPtr[]> Fonts = new Dictionary<FontNameType, IntPtr[]>();
+
+        internal Dictionary<int, IntPtr> Texts = new Dictionary<int, IntPtr>();
+        internal Dictionary<int, IntPtr> TextImages = new Dictionary<int, IntPtr>();
+
+        // Dictionary of "TextVar", which are just text SDL_texture coming from user input.
+        internal Dictionary<TextVarNameType, IntPtr> TextVars = new Dictionary<TextVarNameType, IntPtr>();
+
 
         static class PictoSelection
         {
@@ -80,13 +63,13 @@ namespace GotchiTaMm
                 }
                 else
                     CursorIndex++;
-                
-                Rect = Program.UI.Images.GetValueOrDefault(((PictoNameType)CursorIndex).ToString()).Rectangle;
+
+                Rect = UserInterface.Instance.Images.GetValueOrDefault(((PictoNameType)CursorIndex).ToString()).Rectangle;
                 Rect.x -= 5;
                 Rect.y -= 5;
                 Rect.w += 5;
                 Rect.h += 5;
-                
+
             }
 
             internal static void ClearSelect()
@@ -95,29 +78,6 @@ namespace GotchiTaMm
             }
         }
 
-        internal SDL_Rect Header = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
-        internal SDL_Rect Footer = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
-        internal static UserInterface? Instance { get; private set; }
-        internal Dictionary<ButtonNameType, Button> Buttons = new Dictionary<ButtonNameType, Button>();
-
-        internal Dictionary<string, PackedImage> Images = new Dictionary<string, PackedImage>();
-
-        internal Dictionary<FontNameType, IntPtr[]> Fonts = new Dictionary<FontNameType, IntPtr[]>();
-
-        internal Dictionary<int, IntPtr> Texts = new Dictionary<int, IntPtr>();
-        internal Dictionary<int, IntPtr> TextImages = new Dictionary<int, IntPtr>();
-
-        // Dictionary of "TextVar", which are just text SDL_texture coming from user input.
-        internal Dictionary<TextVarNameType, IntPtr> TextVars = new Dictionary<TextVarNameType, IntPtr>();
-
-        private UserInterface()
-        {
-            ClockRegex = new Regex(H24ClockRegex);
-            InitButtonsSubroutine();
-            InitFontsSubroutine();
-            InitTextImagesSubroutine();
-            InitImagesSubroutine();
-        }
 
         private void InitButtonsSubroutine()
         {
@@ -256,15 +216,6 @@ namespace GotchiTaMm
 
         }
 
-        public static UserInterface Get()
-        {
-            if (Instance == null)
-            {
-                Instance = new UserInterface();
-            }
-            return Instance;
-        }
-
         public void Draw()
         {
             SDL_SetRenderDrawColor(Program.Renderer, 0, 0, 0, 255);
@@ -283,11 +234,9 @@ namespace GotchiTaMm
                 Program.BlitRect(i.Pointer, i.Rectangle);
             }
 
-
             if (PictoSelection.CursorIndex < 0) return;
+
             Program.BlitRect(PictoSelection.Image, PictoSelection.Rect);
-
-
         }
 
         // TEXTVARS
@@ -327,22 +276,22 @@ namespace GotchiTaMm
         {
             Console.WriteLine("Select!");
 
-            if (Game.Instance is null) return;
+            if (Game.lazyInstance is null) return;
 
-            if(Game.Instance.GameState is GameStartState)
+            if (Game.Instance.gameState is GameStartState)
             {
-                if(ClockRegex.IsMatch(Game.Instance.current_input) == true)
+                if (ClockRegex.IsMatch(InputSystem.Instance.appIn) == true)
                 {
                     DrawPictos = true;
-                    Game.Instance.GameState = new GotchiPetViewState();
+                    Game.Instance.gameState = new GotchiPetViewState();
                 }
                 else
                 {
-                    Game.Instance.current_input = "";
-                    SetOrUpdateTextVar(TextVarNameType.TimeStart, Game.Instance.current_input, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                    InputSystem.Instance.appIn = "";
+                    SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
                 }
             }
-            else if (Game.Instance.GameState is GotchiPetViewState)
+            else if (Game.Instance.gameState is GotchiPetViewState)
             {
                 PictoSelection.SelectNext();
             }
@@ -355,10 +304,85 @@ namespace GotchiTaMm
         private void Cancel()
         {
             Console.WriteLine("Cancel!");
-            if (Game.Instance.GameState is GotchiPetViewState)
+            if (Game.Instance.gameState is GotchiPetViewState)
             {
                 PictoSelection.ClearSelect();
             }
         }
-    }    
+
+        internal void RemoveOne()
+        {
+            if (InputSystem.Instance.appIn.Length == 0) return;
+
+            if (InputSystem.Instance.appIn.Length == 4)
+            {
+                InputSystem.Instance.appIn = InputSystem.Instance.appIn.DropLastChar();
+            }
+            InputSystem.Instance.appIn = InputSystem.Instance.appIn.DropLastChar();
+
+            Instance.SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+        }
+
+        internal void AddOne(SDL_Keysym keysym)
+        {
+            if (InputSystem.Instance.appIn.Length == 2)
+            {
+                InputSystem.Instance.appIn += ':';
+            }
+
+            InputSystem.Instance.appIn += (char)keysym.sym;
+
+            SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+        }
+    }
+    internal enum ButtonStateType
+    {
+        Unselected = 0,
+        Selected,
+        Activated,
+    }
+
+    internal enum PictoNameType
+    {
+        Attention = 0,
+        Bathroom,
+        Food,
+        Game,
+        Lights,
+        Medicine,
+        Status,
+        Training,
+    }
+
+    internal enum FontNameType
+    {
+        BlueScreen = 0,
+        RainyHearts,
+    }
+
+    internal enum TextVarNameType
+    {
+        TimeStart = 0,
+
+    }
+
+    internal enum ButtonNameType
+    {
+        Select = 0,
+        Execute,
+        Cancel,
+    }
+
+    internal struct PackedImage
+    {
+        internal IntPtr Pointer;
+        internal SDL_Rect Rectangle;
+
+        public PackedImage(IntPtr pointer, SDL_Rect rect)
+        {
+            Pointer = pointer;
+            Rectangle = rect;
+        }
+    }
+
 }
