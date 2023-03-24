@@ -408,8 +408,6 @@ namespace GotchiTaMm
             SDL_RenderCopy(Renderer, texture, IntPtr.Zero, ref rect);
         }
 
-
-
         internal static void QuitGame(sbyte ProgramCode)
         {
             // Release unsafe pointer

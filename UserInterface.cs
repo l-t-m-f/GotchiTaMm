@@ -66,6 +66,35 @@ namespace GotchiTaMm
 
         internal bool DrawPictos = false;
 
+        static class PictoSelection
+        {
+            internal static IntPtr Image;
+            internal static int CursorIndex = -1;
+            internal static SDL_Rect Rect;
+
+            internal static void SelectNext()
+            {
+                if (CursorIndex == 7)
+                {
+                    CursorIndex = 0;
+                }
+                else
+                    CursorIndex++;
+                
+                Rect = Program.UI.Images.GetValueOrDefault(((PictoNameType)CursorIndex).ToString()).Rectangle;
+                Rect.x -= 5;
+                Rect.y -= 5;
+                Rect.w += 5;
+                Rect.h += 5;
+                
+            }
+
+            internal static void ClearSelect()
+            {
+                CursorIndex = -1;
+            }
+        }
+
         internal SDL_Rect Header = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
         internal SDL_Rect Footer = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
         internal static UserInterface? Instance { get; private set; }
@@ -216,6 +245,15 @@ namespace GotchiTaMm
 
                 Images.Add(lastPictoName, new PackedImage(imagePtr, imageRect));
             }
+
+            IntPtr selectorPtr = IMG_LoadTexture(Program.Renderer, $"gfx/Selector.png");
+            if (selectorPtr == IntPtr.Zero)
+            {
+                Console.WriteLine("There was a problem creating image pointer");
+            }
+
+            PictoSelection.Image = selectorPtr;
+
         }
 
         public static UserInterface Get()
@@ -244,6 +282,12 @@ namespace GotchiTaMm
             {
                 Program.BlitRect(i.Pointer, i.Rectangle);
             }
+
+
+            if (PictoSelection.CursorIndex < 0) return;
+            Program.BlitRect(PictoSelection.Image, PictoSelection.Rect);
+
+
         }
 
         // TEXTVARS
@@ -298,6 +342,10 @@ namespace GotchiTaMm
                     SetOrUpdateTextVar(TextVarNameType.TimeStart, Game.Instance.current_input, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
                 }
             }
+            else if (Game.Instance.GameState is GotchiPetViewState)
+            {
+                PictoSelection.SelectNext();
+            }
 
         }
         private void Execute()
@@ -307,6 +355,10 @@ namespace GotchiTaMm
         private void Cancel()
         {
             Console.WriteLine("Cancel!");
+            if (Game.Instance.GameState is GotchiPetViewState)
+            {
+                PictoSelection.ClearSelect();
+            }
         }
     }    
 }
