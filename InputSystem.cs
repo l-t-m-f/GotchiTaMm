@@ -1,4 +1,6 @@
-﻿using static GotchiTaMm.Program;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using static GotchiTaMm.Program;
 using static SDL2.SDL;
 
 namespace GotchiTaMm
@@ -23,6 +25,7 @@ namespace GotchiTaMm
         internal Mouse mouse;
         internal Keyboard keyboard;
         internal string appIn = "";
+        internal int appInLimit = 5;
 
         //Singleton
 
@@ -57,14 +60,12 @@ namespace GotchiTaMm
 
                     if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_BACKSPACE)
                     {
-                        UserInterface.Instance.RemoveOne();
+                        TrimAppIn(true, TextVarNameType.TimeStart, true);
                     }
-
-                    if (appIn.Length > 4) return;
 
                     if (char.IsAsciiDigit((char)keysym.sym))
                     {
-                        UserInterface.Instance.AddOne(keysym);
+                        PushIntoAppIn(keysym, true, TextVarNameType.TimeStart, true);
                     }
 
                     Console.WriteLine(appIn);
@@ -114,6 +115,75 @@ namespace GotchiTaMm
             //Console.WriteLine($"Mouse moving at {mouseMotionEvent.x}, {mouseMotionEvent.y}");
             Instance.mouse.position.x = mouseMotionEvent.x;
             Instance.mouse.position.y = mouseMotionEvent.y;
+        }
+
+        internal void TrimAppIn(bool render = false, TextVarNameType renderTarget = 0, bool isTime = false)
+        {
+            if (appIn.Length == 0) return;
+
+            if (isTime)
+            {
+                if (Instance.appIn.Length == 4)
+                {
+                    appIn = appIn.DropLastChar();
+                }
+            }
+
+            appIn = appIn.DropLastChar();
+
+            if (!render) return;
+
+            UserInterface.Instance.SetOrUpdateTextVar(renderTarget, appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+        }
+
+        internal void PushIntoAppIn(SDL_Keysym keysym, bool render = false, TextVarNameType renderTarget = 0, bool isTime = false)
+        {
+            if (appIn.Length >= appInLimit) return;
+
+            if (isTime)
+            {
+                if (Instance.appIn.Length == 2)
+                {
+                    Instance.appIn += ':';
+                }
+            }
+
+            appIn += (char)keysym.sym;
+
+            if (!render) return;
+
+            UserInterface.Instance.SetOrUpdateTextVar(renderTarget, appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+
+        }
+
+
+        public void SelectButtonPressed()
+        {
+            Console.WriteLine("Select!");
+
+            if (Game.lazyInstance is null) return;
+
+            if (Game.Instance.gameState is GameStartState)
+            {
+                UserInterface.Instance.TryInputTime();
+            }
+            else if (Game.Instance.gameState is GotchiPetViewState)
+            {
+                UserInterface.Instance.pictoSelection.SelectNext();
+            }
+
+        }
+        public void ExecuteButtonPressed()
+        {
+            Console.WriteLine(value: "Execute!");
+        }
+        public void CancelButtonPressed()
+        {
+            Console.WriteLine("Cancel!");
+            if (Game.Instance.gameState is GotchiPetViewState)
+            {
+                UserInterface.Instance.pictoSelection.ClearSelect();
+            }
         }
     }
 }

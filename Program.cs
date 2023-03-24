@@ -1,27 +1,24 @@
 ﻿using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
-
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using System.ComponentModel;
 using System.Reflection;
 
 namespace GotchiTaMm
 {
+
+    public delegate void VoidDelegate();
+    public delegate void KeysymDelegate(SDL_Keysym keysym);
+    public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
+    public delegate void MouseMotionEventDelegate(SDL_MouseMotionEvent mouseMotionEvent);
+
     internal class Program
     {
         internal const int WINDOW_W = 480;
         internal const int WINDOW_H = 320;
+
         static internal IntPtr Window;
         static internal IntPtr Renderer;        
-
-        public delegate void VoidDelegate();
-        public delegate void KeysymDelegate(SDL_Keysym keysym);
-        public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
-        public delegate void MouseMotionEventDelegate(SDL_MouseMotionEvent mouseMotionEvent);
 
         public static event KeysymDelegate? KeyDownEvent;
         public static event KeysymDelegate? KeyUpEvent;
@@ -29,14 +26,6 @@ namespace GotchiTaMm
         public static event MouseButtonEventDelegate? MouseUpEvent;
         public static event MouseMotionEventDelegate? MouseMotionEvent;
 
-        static SaveState? Save;
-
-        // ENCRYPTION
-
-        static byte[] secret = {
-                0x0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
-                0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1
-        };
 
         // OTHER THREADS
 
@@ -55,16 +44,16 @@ namespace GotchiTaMm
             Clock = new Thread(() => ClockThread());
             Animate = new Thread(() => AnimateThread());
 
-            Task<SaveState> LoadData = LoadGame();
-            Save = LoadData.Result;
+            Task<SaveState> LoadData = SaveSystem.Instance.LoadGame();
+            SaveSystem.Instance.SavedGame = LoadData.Result;
 
-            if (Save.LastTime == DateTime.MinValue)
+            if (SaveSystem.Instance.SavedGame.LastTime == DateTime.MinValue)
             {
                 Console.WriteLine("This is the first time the program has been run.");
             }
             else
             {
-                Console.WriteLine($"The program was last shutdown at: {Save.LastTime}");
+                Console.WriteLine($"The program was last shutdown at: {SaveSystem.Instance.SavedGame.LastTime}");
             }
 
             Clock.Start();
@@ -172,7 +161,7 @@ namespace GotchiTaMm
         {
             if (InputSystem.Instance.mouse.buttons[1] == 1)
             {
-                foreach(Button b in UserInterface.Instance.Buttons.Values)
+                foreach(Button b in UserInterface.Instance.buttonsDictio.Values)
                 {
                     if (b.TestMouseOverlap() == true)
                     {
@@ -191,9 +180,13 @@ namespace GotchiTaMm
             {
                 Thread.Sleep(1000);
 
-
-
                 Console.WriteLine("A second has passed.");
+
+                if (Game.Instance.clock is not null)
+                {
+                    Game.Instance.clock.IncrementTime(0, 0, 1);
+                    Console.WriteLine($"Clock incremented: {Game.Instance.clock.GetElapsedTime()}");
+                }
             }
         }
 
@@ -206,100 +199,32 @@ namespace GotchiTaMm
             }
         }
 
-        static void SaveGame(DateTime saveTime)
+        internal static void QuitGame(sbyte ProgramCode)
         {
-            try
-            {
-                if (Save == null)
-                {
-                    Console.WriteLine("Error! Attempting to save, but SaveState is corrupt.");
-                    QuitGame(-1);
-                    return;
-                }
-                Save.LastTime = saveTime;
+            // Release unsafe pointer
+            //Marshal.FreeHGlobal(rectangle_ptr);
 
-                using FileStream fileStream = new("MEM", FileMode.OpenOrCreate);
-                using Aes aes = Aes.Create();
-                aes.Key = secret;
+            SaveSystem.Instance.SaveGame(DateTime.Now);
+            TTF_Quit();
+            SDL_Quit();
 
-                byte[] iv = aes.IV;
-                fileStream.Write(iv, 0, iv.Length);
+            Console.WriteLine("Program exited successfully!");
+            Environment.Exit(ProgramCode);
+        }
+    }
 
-                using CryptoStream cryptoStream = new(
-                    fileStream,
-                    aes.CreateEncryptor(),
-                    CryptoStreamMode.Write);
-                using StreamWriter encryptWriter = new(cryptoStream);
-
-                string jsonString = JsonSerializer.Serialize(Save);
-                byte[] jsonData = Encoding.UTF8.GetBytes(jsonString);
-                cryptoStream.Write(jsonData, 0, jsonData.Length);
-
-                Console.WriteLine("The file was encrypted.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"The encryption failed. {ex}");
-            }
+    public static class Util
+    {
+        public static string GetDescription<T>(this T e) where T : Enum
+        {
+            var descriptionAttribute = e.GetType()
+                                          .GetMember(e.ToString())
+                                          .FirstOrDefault()
+                                          ?.GetCustomAttribute<DescriptionAttribute>();
+            return descriptionAttribute?.Description ?? e.ToString();
         }
 
-        static async Task<SaveState> LoadGame()
-        {
-            SaveState? save = new SaveState {
-                LastTime = DateTime.MinValue,
-            };
-
-            try
-            {
-
-                if (File.Exists("MEM"))
-                {
-                    using FileStream fileStream = new("MEM", FileMode.Open);
-                    using Aes aes = Aes.Create();
-
-                    byte[] iv = new byte[aes.IV.Length];
-                    int numBytesToRead = aes.IV.Length;
-                    int numBytesRead = 0;
-                    while (numBytesToRead > 0)
-                    {
-                        int n = fileStream.Read(iv, numBytesRead, numBytesToRead);
-                        if (n == 0) break;
-
-                        numBytesRead += n;
-                        numBytesToRead -= n;
-                    }
-
-                    using CryptoStream cryptoStream = new(fileStream, aes.CreateDecryptor(secret, iv), CryptoStreamMode.Read);
-
-                    using MemoryStream memoryStream = new();
-                    await cryptoStream.CopyToAsync(memoryStream);
-                    memoryStream.Position = 0;
-
-                    string jsonString = Encoding.UTF8.GetString(memoryStream.ToArray());
-                    if (jsonString != "{}")
-                    {
-                        save = JsonSerializer.Deserialize<SaveState>(jsonString);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"The decryption failed. {ex}");
-            }
-
-            if (save == null)
-            {
-
-                Console.WriteLine("Save is corrupt, therefore, must reset save.");
-                save = new SaveState {
-                    LastTime = DateTime.MinValue,
-                };
-            }
-
-            return save;
-        }
-
-        public static void DrawEllipsoid(SDL_Rect circle)
+        public static void DrawEllipsoid(IntPtr renderer, SDL_Rect circle)
         {
             double pih = Math.PI / 2;
             const int prec = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
@@ -320,10 +245,10 @@ namespace GotchiTaMm
                 //draw line from previous point to new point, ONLY if point incremented
                 if ((x != x1) || (y != y1))//only draw if coordinate changed
                 {
-                    SDL_RenderDrawLine(Renderer, circle.x + x, circle.y - y, circle.x + x1, circle.y - y1);//quadrant TR
-                    SDL_RenderDrawLine(Renderer, circle.x - x, circle.y - y, circle.x - x1, circle.y - y1);//quadrant TL
-                    SDL_RenderDrawLine(Renderer, circle.x - x, circle.y + y, circle.x - x1, circle.y + y1);//quadrant BL
-                    SDL_RenderDrawLine(Renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
+                    SDL_RenderDrawLine(renderer, circle.x + x, circle.y - y, circle.x + x1, circle.y - y1);//quadrant TR
+                    SDL_RenderDrawLine(renderer, circle.x - x, circle.y - y, circle.x - x1, circle.y - y1);//quadrant TL
+                    SDL_RenderDrawLine(renderer, circle.x - x, circle.y + y, circle.x - x1, circle.y + y1);//quadrant BL
+                    SDL_RenderDrawLine(renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
                 }
                 //save previous points
                 x = x1;//save new previous point
@@ -333,13 +258,13 @@ namespace GotchiTaMm
             if (x != 0)
             {
                 x = 0;
-                SDL_RenderDrawLine(Renderer, circle.x + x, circle.y - y, circle.x + x1, circle.y - y1);//quadrant TR
-                SDL_RenderDrawLine(Renderer, circle.x - x, circle.y - y, circle.x - x1, circle.y - y1);//quadrant TL
-                SDL_RenderDrawLine(Renderer, circle.x - x, circle.y + y, circle.x - x1, circle.y + y1);//quadrant BL
-                SDL_RenderDrawLine(Renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
+                SDL_RenderDrawLine(renderer, circle.x + x, circle.y - y, circle.x + x1, circle.y - y1);//quadrant TR
+                SDL_RenderDrawLine(renderer, circle.x - x, circle.y - y, circle.x - x1, circle.y - y1);//quadrant TL
+                SDL_RenderDrawLine(renderer, circle.x - x, circle.y + y, circle.x - x1, circle.y + y1);//quadrant BL
+                SDL_RenderDrawLine(renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
             }
         }
-        public static void FillEllipsoid(SDL_Rect circle)
+        public static void FillEllipsoid(IntPtr renderer, SDL_Rect circle)
         {
             double pih = Math.PI / 2;
             const int prec = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
@@ -350,11 +275,11 @@ namespace GotchiTaMm
             int x1 = x;
             int y1 = y;
 
-            SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
-            SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
+            SDL_RenderDrawLine(renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
+            SDL_RenderDrawLine(renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
 
             double step = pih / prec; // amount to add to theta each time (degrees)
-            for (; theta <= pih + step; theta += step)//step through only a 90 arc (1 quadrant)
+            for (; theta <= pih + step ; theta += step)//step through only a 90 arc (1 quadrant)
             {
                 //get new point location
                 x1 = (int)(circle.w * Math.Cos(theta) + 0.5); //new point (+.5 is a quick rounding method)
@@ -363,9 +288,9 @@ namespace GotchiTaMm
                 //draw line from previous point to new point, ONLY if point incremented
                 if ((x != x1) || (y != y1))//only draw if coordinate changed
                 {
-                    SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
-                    SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
-                }       
+                    SDL_RenderDrawLine(renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
+                    SDL_RenderDrawLine(renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
+                }
                 //save previous points
                 x = x1;//save new previous point
                 y = y1;//save new previous point
@@ -374,49 +299,24 @@ namespace GotchiTaMm
             if (x != 0)
             {
                 x = 0;
-                SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
-                SDL_RenderDrawLine(Renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
+                SDL_RenderDrawLine(renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
+                SDL_RenderDrawLine(renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
             }
         }
 
 
-        internal static void Blit(IntPtr texture, int x, int y)
+        internal static void Blit(IntPtr renderer, IntPtr texture, int x, int y)
         {
             SDL_Rect destination;
             destination.x = x;
             destination.y = y;
             SDL_QueryTexture(texture, out uint format, out int access, out destination.w, out destination.h);
-            SDL_RenderCopy(Renderer, texture, IntPtr.Zero, ref destination);
+            SDL_RenderCopy(renderer, texture, IntPtr.Zero, ref destination);
         }
 
-        internal static void BlitRect(IntPtr texture, SDL_Rect rect)
+        internal static void BlitRect(IntPtr renderer, IntPtr texture, SDL_Rect rect)
         {
-            SDL_RenderCopy(Renderer, texture, IntPtr.Zero, ref rect);
-        }
-
-        internal static void QuitGame(sbyte ProgramCode)
-        {
-            // Release unsafe pointer
-            //Marshal.FreeHGlobal(rectangle_ptr);
-
-            SaveGame(DateTime.Now);
-            TTF_Quit();
-            SDL_Quit();
-
-            Console.WriteLine("Program exited successfully!");
-            Environment.Exit(ProgramCode);
-        }
-    }
-
-    public static class Util
-    {
-        public static string GetDescription<T>(this T e) where T : Enum
-        {
-            var descriptionAttribute = e.GetType()
-                                          .GetMember(e.ToString())
-                                          .FirstOrDefault()
-                                          ?.GetCustomAttribute<DescriptionAttribute>();
-            return descriptionAttribute?.Description ?? e.ToString();
+            SDL_RenderCopy(renderer, texture, IntPtr.Zero, ref rect);
         }
     }
 

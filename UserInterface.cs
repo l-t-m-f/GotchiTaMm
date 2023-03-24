@@ -1,4 +1,6 @@
 ﻿using System.Text.RegularExpressions;
+using static GotchiTaMm.Program;
+using static GotchiTaMm.Util;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
@@ -7,12 +9,27 @@ namespace GotchiTaMm
 {
     internal class UserInterface
     {
+        const int MAX_FONT_SIZE_FACTOR = 12;
+
+        string clockRegexFormat = @"^([01]\d|2[0-3]):([0-5]\d)$";
+        internal PictoSelection pictoSelection;
+        private Regex clockRegex;
+        internal bool canDrawPictos = false;
+        internal SDL_Rect headerRect = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
+        internal SDL_Rect footerRect = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
+        internal Dictionary<ButtonNameType, Button> buttonsDictio = new Dictionary<ButtonNameType, Button>();
+        internal Dictionary<string, PackedImage> imagesDictio = new Dictionary<string, PackedImage>();
+        internal Dictionary<FontNameType, IntPtr[]> fontsDictio = new Dictionary<FontNameType, IntPtr[]>();
+        internal Dictionary<int, IntPtr> textsDictio = new Dictionary<int, IntPtr>();
+        internal Dictionary<int, IntPtr> textImagesDictio = new Dictionary<int, IntPtr>();
+        internal Dictionary<TextVarNameType, IntPtr> textVarsDictio = new Dictionary<TextVarNameType, IntPtr>();
 
         //Singleton
         internal static readonly Lazy<UserInterface> lazyInstance = new Lazy<UserInterface>(() => new UserInterface());
         private UserInterface()
         {
-            ClockRegex = new Regex(H24ClockRegex);
+            pictoSelection = new PictoSelection();
+            clockRegex = new Regex(clockRegexFormat);
             InitButtonsSubroutine();
             InitFontsSubroutine();
             InitTextImagesSubroutine();
@@ -27,54 +44,32 @@ namespace GotchiTaMm
 
         //
 
-        string H24ClockRegex = @"^([01]\d|2[0-3]):([0-5]\d)$";
-        Regex ClockRegex;
-        const int MAX_FONT_SIZE_FACTOR = 12;
-
-        internal bool DrawPictos = false;
-
-        internal SDL_Rect Header = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
-        internal SDL_Rect Footer = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
-
-        internal Dictionary<ButtonNameType, Button> Buttons = new Dictionary<ButtonNameType, Button>();
-
-        internal Dictionary<string, PackedImage> Images = new Dictionary<string, PackedImage>();
-
-        internal Dictionary<FontNameType, IntPtr[]> Fonts = new Dictionary<FontNameType, IntPtr[]>();
-
-        internal Dictionary<int, IntPtr> Texts = new Dictionary<int, IntPtr>();
-        internal Dictionary<int, IntPtr> TextImages = new Dictionary<int, IntPtr>();
-
-        // Dictionary of "TextVar", which are just text SDL_texture coming from user input.
-        internal Dictionary<TextVarNameType, IntPtr> TextVars = new Dictionary<TextVarNameType, IntPtr>();
-
-
-        static class PictoSelection
+        internal class PictoSelection
         {
-            internal static IntPtr Image;
-            internal static int CursorIndex = -1;
-            internal static SDL_Rect Rect;
+            internal IntPtr image;
+            internal int cursorIndex = -1;
+            internal SDL_Rect selectionPosAndSize;
 
-            internal static void SelectNext()
+            internal void SelectNext()
             {
-                if (CursorIndex == 7)
+                if (cursorIndex == 7)
                 {
-                    CursorIndex = 0;
+                    cursorIndex = 0;
                 }
                 else
-                    CursorIndex++;
+                    cursorIndex++;
 
-                Rect = UserInterface.Instance.Images.GetValueOrDefault(((PictoNameType)CursorIndex).ToString()).Rectangle;
-                Rect.x -= 5;
-                Rect.y -= 5;
-                Rect.w += 5;
-                Rect.h += 5;
+                selectionPosAndSize = Instance.imagesDictio.GetValueOrDefault(((PictoNameType)cursorIndex).ToString()).Rectangle;
+                selectionPosAndSize.x -= 5;
+                selectionPosAndSize.y -= 5;
+                selectionPosAndSize.w += 5;
+                selectionPosAndSize.h += 5;
 
             }
 
-            internal static void ClearSelect()
+            internal void ClearSelect()
             {
-                CursorIndex = -1;
+                cursorIndex = -1;
             }
         }
 
@@ -86,35 +81,35 @@ namespace GotchiTaMm
                     new SDL_Color { r = 255, g = 0, b = 0, a = 255 },
                 };
 
-            Buttons.Add(ButtonNameType.Select, new Button(new SDL_Rect {
-                x = ((Program.WINDOW_W / 5) * 1) - 20,
-                y = Program.WINDOW_H - 70,
+            buttonsDictio.Add(ButtonNameType.Select, new Button(new SDL_Rect {
+                x = ((WINDOW_W / 5) * 1) - 20,
+                y = WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme, Select));
+                button_color_theme, InputSystem.Instance.SelectButtonPressed));
 
-            Buttons.Add(ButtonNameType.Execute, new Button(new SDL_Rect {
-                x = (Program.WINDOW_W / 2) - 20,
-                y = Program.WINDOW_H - 70,
+            buttonsDictio.Add(ButtonNameType.Execute, new Button(new SDL_Rect {
+                x = (WINDOW_W / 2) - 20,
+                y = WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme, Execute));
+                button_color_theme, InputSystem.Instance.ExecuteButtonPressed));
 
-            Buttons.Add(ButtonNameType.Cancel, new Button(new SDL_Rect {
-                x = ((Program.WINDOW_W / 5) * 4) - 20,
-                y = Program.WINDOW_H - 70,
+            buttonsDictio.Add(ButtonNameType.Cancel, new Button(new SDL_Rect {
+                x = ((WINDOW_W / 5) * 4) - 20,
+                y = WINDOW_H - 70,
                 w = 40,
                 h = 40
             },
-                button_color_theme, Cancel));
+                button_color_theme, InputSystem.Instance.CancelButtonPressed));
         }
 
 
         private IntPtr CreateTextTexturePointer(string text, FontNameType font_name, int font_size_factor = 4, SDL_Color color = new SDL_Color())
         {
-            IntPtr fontToUse = Fonts.GetValueOrDefault(font_name)[font_size_factor];
+            IntPtr fontToUse = fontsDictio.GetValueOrDefault(font_name)[font_size_factor];
 
             IntPtr renderedTextSurface = TTF_RenderUTF8_Blended(fontToUse, text, color);
             if (renderedTextSurface == IntPtr.Zero)
@@ -122,7 +117,7 @@ namespace GotchiTaMm
                 Console.WriteLine("There was a problem creating textvar pointer");
             }
 
-            IntPtr textTexture = SDL_CreateTextureFromSurface(Program.Renderer, renderedTextSurface);
+            IntPtr textTexture = SDL_CreateTextureFromSurface(Renderer, renderedTextSurface);
             if (textTexture == IntPtr.Zero)
             {
                 Console.WriteLine("There was a problem creating text image pointer");
@@ -136,9 +131,9 @@ namespace GotchiTaMm
             int fontCount = Enum.GetValues(typeof(FontNameType)).Length;
             for (int i = 0 ; i < fontCount ; i++)
             {
-                Fonts?.Add(((FontNameType)i), new IntPtr[MAX_FONT_SIZE_FACTOR]);
+                fontsDictio?.Add(((FontNameType)i), new IntPtr[MAX_FONT_SIZE_FACTOR]);
 
-                for (int j = 0 ; j < Fonts?.GetValueOrDefault(((FontNameType)i))?.GetLength(0) ; j++)
+                for (int j = 0 ; j < fontsDictio?.GetValueOrDefault(((FontNameType)i))?.GetLength(0) ; j++)
                 {
                     IntPtr lastFont = TTF_OpenFont($"{(FontNameType)i}.ttf", (int)Math.Pow(2, j));
                     if (lastFont == IntPtr.Zero)
@@ -146,7 +141,7 @@ namespace GotchiTaMm
                         Console.WriteLine("There was a problem loading the font");
                     }
 
-                    IntPtr[]? fontsArray = Fonts?.GetValueOrDefault(((FontNameType)i));
+                    IntPtr[]? fontsArray = fontsDictio?.GetValueOrDefault(((FontNameType)i));
                     if (fontsArray != null) fontsArray[j] = lastFont;
                 }
             }
@@ -160,7 +155,7 @@ namespace GotchiTaMm
             {
                 FontNameType fontName = GameStringPool.Data[i].Font;
                 int fontSizeFac = GameStringPool.Data[i].SizeFactor;
-                IntPtr fontToUse = Fonts.GetValueOrDefault(fontName)[fontSizeFac];
+                IntPtr fontToUse = fontsDictio.GetValueOrDefault(fontName)[fontSizeFac];
 
                 IntPtr testText = TTF_RenderUTF8_Blended(fontToUse, GameStringPool.Data[i].Text, new SDL_Color { r = 55, g = 0, b = 0, a = 255 });
                 if (testText == IntPtr.Zero)
@@ -168,14 +163,14 @@ namespace GotchiTaMm
                     Console.WriteLine("There was a problem creating text pointer");
                 }
 
-                Texts.Add(i, testText);
+                textsDictio.Add(i, testText);
 
-                IntPtr testTextImage = SDL_CreateTextureFromSurface(Program.Renderer, Texts.GetValueOrDefault(i));
+                IntPtr testTextImage = SDL_CreateTextureFromSurface(Program.Renderer, textsDictio.GetValueOrDefault(i));
                 if (testTextImage == IntPtr.Zero)
                 {
                     Console.WriteLine("There was a problem creating text image pointer");
                 }
-                TextImages.Add(i, testTextImage);
+                textImagesDictio.Add(i, testTextImage);
             }
         }
 
@@ -203,40 +198,40 @@ namespace GotchiTaMm
                     imageRect = new SDL_Rect { x = 80 + (100 * (i - 4)), y = 200, w = 40, h = 30 };
                 }
 
-                Images.Add(lastPictoName, new PackedImage(imagePtr, imageRect));
+                imagesDictio.Add(lastPictoName, new PackedImage(imagePtr, imageRect));
             }
 
-            IntPtr selectorPtr = IMG_LoadTexture(Program.Renderer, $"gfx/Selector.png");
+            IntPtr selectorPtr = IMG_LoadTexture(Renderer, $"gfx/Selector.png");
             if (selectorPtr == IntPtr.Zero)
             {
                 Console.WriteLine("There was a problem creating image pointer");
             }
 
-            PictoSelection.Image = selectorPtr;
+            pictoSelection.image = selectorPtr;
 
         }
 
         public void Draw()
         {
-            SDL_SetRenderDrawColor(Program.Renderer, 0, 0, 0, 255);
-            SDL_RenderFillRect(Program.Renderer, ref Header);
-            SDL_RenderFillRect(Program.Renderer, ref Footer);
+            SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(Renderer, ref headerRect);
+            SDL_RenderFillRect(Renderer, ref footerRect);
 
-            foreach (Button b in Buttons.Values)
+            foreach (Button b in buttonsDictio.Values)
             {
                 b.Draw();
             }
 
-            if (DrawPictos == false) return;
+            if (canDrawPictos == false) return;
 
-            foreach (PackedImage i in Images.Values)
+            foreach (PackedImage i in imagesDictio.Values)
             {
-                Program.BlitRect(i.Pointer, i.Rectangle);
+                BlitRect(Renderer, i.Pointer, i.Rectangle);
             }
 
-            if (PictoSelection.CursorIndex < 0) return;
+            if (pictoSelection.cursorIndex < 0) return;
 
-            Program.BlitRect(PictoSelection.Image, PictoSelection.Rect);
+            BlitRect(Renderer, pictoSelection.image, pictoSelection.selectionPosAndSize);
         }
 
         // TEXTVARS
@@ -244,13 +239,13 @@ namespace GotchiTaMm
         // Verifies if a new textVar exists and if so, update it to the new text and optional styling.
         internal void UpdateTextVar(TextVarNameType text_var_label_to_update, string new_text, FontNameType new_font_name, int new_font_size_factor = 4, SDL_Color new_color = new SDL_Color())
         {
-            if (TextVars.ContainsKey(text_var_label_to_update) == false)
+            if (textVarsDictio.ContainsKey(text_var_label_to_update) == false)
             {
                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "You requested to modify a TextVar which does not exist.");
                 return;
             }
 
-            TextVars.Remove(text_var_label_to_update);
+            textVarsDictio.Remove(text_var_label_to_update);
             SetTextVar(text_var_label_to_update, new_text, new_font_name, new_font_size_factor, new_color);
         }
 
@@ -264,76 +259,29 @@ namespace GotchiTaMm
                 Console.WriteLine("Update to text var failed.");
                 return;
             }
-            TextVars.Add(text_var_label, texture);
+            textVarsDictio.Add(text_var_label, texture);
         }
         internal void SetOrUpdateTextVar(TextVarNameType text_var_label_to_update, string new_text, FontNameType new_font_name, int new_font_size_factor = 4, SDL_Color new_color = new SDL_Color())
         {
-            TextVars.Remove(text_var_label_to_update);
+            textVarsDictio.Remove(text_var_label_to_update);
             SetTextVar(text_var_label_to_update, new_text, new_font_name, new_font_size_factor, new_color);
         }
 
-        private void Select()
+        internal void TryInputTime()
         {
-            Console.WriteLine("Select!");
-
-            if (Game.lazyInstance is null) return;
-
-            if (Game.Instance.gameState is GameStartState)
+            if (clockRegex.IsMatch(InputSystem.Instance.appIn) == true)
             {
-                if (ClockRegex.IsMatch(InputSystem.Instance.appIn) == true)
-                {
-                    DrawPictos = true;
-                    Game.Instance.gameState = new GotchiPetViewState();
-                }
-                else
-                {
-                    InputSystem.Instance.appIn = "";
-                    SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
-                }
+                canDrawPictos = true;
+                Game.Instance.gameState = new GotchiPetViewState();
+                Game.Instance.clock = new Clock(0, 0, 0);
             }
-            else if (Game.Instance.gameState is GotchiPetViewState)
+            else
             {
-                PictoSelection.SelectNext();
-            }
-
-        }
-        private void Execute()
-        {
-            Console.WriteLine(value: "Execute!");
-        }
-        private void Cancel()
-        {
-            Console.WriteLine("Cancel!");
-            if (Game.Instance.gameState is GotchiPetViewState)
-            {
-                PictoSelection.ClearSelect();
+                InputSystem.Instance.appIn = "";
+                SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
             }
         }
 
-        internal void RemoveOne()
-        {
-            if (InputSystem.Instance.appIn.Length == 0) return;
-
-            if (InputSystem.Instance.appIn.Length == 4)
-            {
-                InputSystem.Instance.appIn = InputSystem.Instance.appIn.DropLastChar();
-            }
-            InputSystem.Instance.appIn = InputSystem.Instance.appIn.DropLastChar();
-
-            Instance.SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
-        }
-
-        internal void AddOne(SDL_Keysym keysym)
-        {
-            if (InputSystem.Instance.appIn.Length == 2)
-            {
-                InputSystem.Instance.appIn += ':';
-            }
-
-            InputSystem.Instance.appIn += (char)keysym.sym;
-
-            SetOrUpdateTextVar(TextVarNameType.TimeStart, InputSystem.Instance.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
-        }
     }
     internal enum ButtonStateType
     {
