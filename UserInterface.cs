@@ -15,8 +15,8 @@ namespace GotchiTaMm
         internal PictoSelection pictoSelection;
         private Regex clockRegex;
         internal bool canDrawPictos = false;
-        internal SDL_Rect headerRect = new SDL_Rect { x = 0, y = 0, w = Program.WINDOW_W, h = 10 };
-        internal SDL_Rect footerRect = new SDL_Rect { x = 0, y = Program.WINDOW_H - 50, w = Program.WINDOW_W, h = 50 };
+        internal SDL_Rect headerRect = new SDL_Rect { x = 0, y = 0, w = WINDOW_W, h = 10 };
+        internal SDL_Rect footerRect = new SDL_Rect { x = 0, y = WINDOW_H - 50, w = WINDOW_W, h = 50 };
         internal Dictionary<ButtonNameType, Button> buttonsDictio = new Dictionary<ButtonNameType, Button>();
         internal Dictionary<string, PackedImage> imagesDictio = new Dictionary<string, PackedImage>();
         internal Dictionary<FontNameType, IntPtr[]> fontsDictio = new Dictionary<FontNameType, IntPtr[]>();
@@ -272,8 +272,11 @@ namespace GotchiTaMm
             if (clockRegex.IsMatch(InputSystem.Instance.appIn) == true)
             {
                 canDrawPictos = true;
-                Game.Instance.gameState = new GotchiPetViewState();
-                Game.Instance.clock = new Clock(0, 0, 0);
+                Game.Instance.state = new GotchiPetViewState();
+                Game.Instance.clock = new Clock(
+                    int.Parse(InputSystem.Instance.appIn.Substring(0, 2)), 
+                    int.Parse(InputSystem.Instance.appIn.Substring(3, 2)), 
+                    0);
             }
             else
             {
@@ -311,6 +314,7 @@ namespace GotchiTaMm
     internal enum TextVarNameType
     {
         TimeStart = 0,
+        ClockTime,
 
     }
 

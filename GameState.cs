@@ -1,8 +1,7 @@
 ﻿namespace GotchiTaMm
 {
-        internal abstract class GameState
+    internal abstract class GameState
     {
-
     }
 
     internal class GameStartState : GameState

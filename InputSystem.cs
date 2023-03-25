@@ -55,7 +55,7 @@ namespace GotchiTaMm
             }
             else
             {
-                if (Game.Instance.gameState is GameStartState)
+                if (Game.Instance.state is GameStartState)
                 {
 
                     if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_BACKSPACE)
@@ -70,16 +70,16 @@ namespace GotchiTaMm
 
                     Console.WriteLine(appIn);
                 }
-                else if (Game.Instance.gameState is TimeSetPauseState)
+                else if (Game.Instance.state is TimeSetPauseState)
                 {
                 }
-                else if (Game.Instance.gameState is GotchiPetViewState)
+                else if (Game.Instance.state is GotchiPetViewState)
                 {
                 }
-                else if (Game.Instance.gameState is GotchiPetEvolveState)
+                else if (Game.Instance.state is GotchiPetEvolveState)
                 {
                 }
-                else if (Game.Instance.gameState is GotchiGameState)
+                else if (Game.Instance.state is GotchiGameState)
                 {
                 }
             }
@@ -163,11 +163,11 @@ namespace GotchiTaMm
 
             if (Game.lazyInstance is null) return;
 
-            if (Game.Instance.gameState is GameStartState)
+            if (Game.Instance.state is GameStartState)
             {
                 UserInterface.Instance.TryInputTime();
             }
-            else if (Game.Instance.gameState is GotchiPetViewState)
+            else if (Game.Instance.state is GotchiPetViewState)
             {
                 UserInterface.Instance.pictoSelection.SelectNext();
             }
@@ -180,7 +180,7 @@ namespace GotchiTaMm
         public void CancelButtonPressed()
         {
             Console.WriteLine("Cancel!");
-            if (Game.Instance.gameState is GotchiPetViewState)
+            if (Game.Instance.state is GotchiPetViewState)
             {
                 UserInterface.Instance.pictoSelection.ClearSelect();
             }

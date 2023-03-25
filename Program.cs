@@ -1,12 +1,12 @@
-﻿using static SDL2.SDL;
+﻿using System.ComponentModel;
+using System.Reflection;
+
+using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
-using System.ComponentModel;
-using System.Reflection;
 
 namespace GotchiTaMm
 {
-
     public delegate void VoidDelegate();
     public delegate void KeysymDelegate(SDL_Keysym keysym);
     public delegate void MouseButtonEventDelegate(SDL_MouseButtonEvent mouseButtonEvent);
@@ -120,7 +120,7 @@ namespace GotchiTaMm
             SDL_SetRenderDrawColor(Renderer, 155, 155, 155, 255);
             SDL_RenderClear(Renderer);
 
-            Game.Instance.Draw();
+            Game.Instance.scene.Draw();
             UserInterface.Instance.Draw();
 
             SDL_RenderPresent(Renderer);
