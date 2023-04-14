@@ -63,7 +63,7 @@ public class Subsystem_Imaging
                 for (var i = 0; i < this.Sprite_Atlas.Surface_Data.Length; i++)
                     {
                         SDL_QueryTexture(
-                            SDL_CreateTextureFromSurface(Main_App.Renderer,
+                            SDL_CreateTextureFromSurface(Renderer,
                                 this.Sprite_Atlas.Surface_Data[i]),
                             out uint _, out int _, out int w, out int h);
 

@@ -69,7 +69,7 @@ internal class Clock
             {
                 this._session_current_date_time.Add(TimeSpan.FromSeconds(1));
             }
-        internal string GetGameTime()
+        internal string Get_Game_Time()
             {
                 return $"{this._session_current_date_time.Hour:D2}:" +
                        $"{this._session_current_date_time.Minute:D2}:" +

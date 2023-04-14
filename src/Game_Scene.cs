@@ -43,19 +43,20 @@ internal class Game_Scene
                                 if (Game.Instance.Clock is not null)
                                     {
 
-                                        Subsystem_UI.Instance.Set_Or_Update_Text_Var(Text_Var_Name_Type.CLOCK_TIME, Game.Instance.Clock.GetGameTime(), Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                                        Subsystem_UI.Instance.Set_Or_Update_Text_Var(Text_Var_Name_Type.CLOCK_TIME,
+                                            Game.Instance.Clock.Get_Game_Time(),
+                                            Font_Name_Type.RAINY_HEARTS, 6,
+                                            new SDL_Color
+                                                {
+                                                    r = 55, g = 125, b = 125,
+                                                    a = 255
+                                                });
 
-                                        Blit(Renderer, Subsystem_UI.Instance.Text_Vars_Dictionary.GetValueOrDefault(Text_Var_Name_Type.CLOCK_TIME), 15, 110);
+                                        Blit(Renderer,
+                                            Subsystem_UI.Instance
+                                                .Text_Vars_Dictionary
+                                                .GetValueOrDefault(Text_Var_Name_Type.CLOCK_TIME), 15, 110);
                                     }
-                                SDL_Rect circle = new SDL_Rect {
-                                        x = 195,
-                                        y = 132,
-                                        w = 30,
-                                        h = 42,
-                                    };
-
-                                SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255);
-                                Fill_Ellipsoid(Renderer, circle);
                                 break;
                             }
                         case Game_State_Pet_Evolve:

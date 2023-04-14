@@ -79,7 +79,7 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                 var full_filename =
                     $"{Subsystem_Imaging.DIRECTORY_PATH}\\{short_filename}.png";
                 Atlas_Entry? entry = null;
-                foreach (var t in Entries)
+                foreach (var t in this.Entries)
                     {
                         if (t.Filename != full_filename) continue;
                         entry = t;
@@ -224,7 +224,7 @@ internal class Sprite_Atlas : IComparer<IntPtr>
         
         public int Get_Index_Of_Surface(IntPtr surface)
             {
-                int index = Array.IndexOf(Surface_Data, surface);
+                int index = Array.IndexOf(this.Surface_Data, surface);
                 return index;
             }
     }

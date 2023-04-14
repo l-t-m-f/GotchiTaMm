@@ -117,7 +117,7 @@ internal class Main_App
                 // .background_rect);
                 
                 Game.Instance.Scene.Draw();
-                //Subsystem_UI.Instance.Draw();
+                Subsystem_UI.Instance.Draw();
 
                 SDL_RenderPresent(Renderer);
             }

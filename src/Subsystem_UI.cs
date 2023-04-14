@@ -17,14 +17,7 @@ internal class Subsystem_UI
 
         internal Picto_Selection Picto_Selection { get; init; }
         private Regex Clock_Regex { get; init; }
-
         private bool Can_Draw_Pictos { get; set; }
-
-        private SDL_Rect _header_rect =
-            new() { x = 0, y = 0, w = WINDOW_W, h = 10 };
-
-        private SDL_Rect _footer_rect = new()
-                { x = 0, y = WINDOW_H - 50, w = WINDOW_W, h = 50 };
 
         internal readonly Dictionary<Button_Name_Type, Button>
             Buttons_Dictionary = new();
@@ -41,7 +34,6 @@ internal class Subsystem_UI
         internal readonly Dictionary<Text_Var_Name_Type, IntPtr>
             Text_Vars_Dictionary =
                 new();
-
         //Singleton
         private static readonly Lazy<Subsystem_UI> _Lazy_Instance =
             new(() => new Subsystem_UI());
@@ -69,11 +61,13 @@ internal class Subsystem_UI
                         new() { r = 255, g = 0, b = 0, a = 255 },
                     };
 
+                const int WINDOW_FIFTH = WINDOW_W / 5;
+                
                 this.Buttons_Dictionary.Add(Button_Name_Type.SELECT, new Button(
                     new SDL_Rect
                         {
-                            x = (WINDOW_W / 5) * 1 - 20,
-                            y = WINDOW_H - 70,
+                            x = (int)(WINDOW_FIFTH * SCREEN_RATIO) - 20,
+                            y = 200,
                             w = 40,
                             h = 40
                         },
@@ -84,8 +78,8 @@ internal class Subsystem_UI
                     new Button(
                         new SDL_Rect
                             {
-                                x = WINDOW_W / 2 - 20,
-                                y = WINDOW_H - 70,
+                                x = (int)((WINDOW_W/2) * SCREEN_RATIO) - 20,
+                                y = 200,
                                 w = 40,
                                 h = 40
                             },
@@ -95,8 +89,9 @@ internal class Subsystem_UI
                 this.Buttons_Dictionary.Add(Button_Name_Type.CANCEL, new Button(
                     new SDL_Rect
                         {
-                            x = WINDOW_W / 5 * 4 - 20,
-                            y = WINDOW_H - 70,
+                          
+                            x = (int)((WINDOW_W - WINDOW_FIFTH) * SCREEN_RATIO) - 20,
+                            y = 200,
                             w = 40,
                             h = 40
                         },
@@ -179,31 +174,19 @@ internal class Subsystem_UI
 
         public void Draw()
             {
-                SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-                SDL_RenderFillRect(Renderer, ref this._header_rect);
-                SDL_RenderFillRect(Renderer, ref this._footer_rect);
-
                 foreach (Button b in this.Buttons_Dictionary.Values)
                     {
                         b.Draw();
                     }
 
                 if (this.Can_Draw_Pictos == false) return;
-
-                // foreach (PackedImage i in this.ImagesDictio.Values)
-                //     {
-                //         BlitRect(Renderer, i.Pointer, i.Rectangle);
-                //     }
-
+                
                 if (this.Picto_Selection.Cursor_Index < 0) return;
 
                 BlitRect(Renderer, this.Picto_Selection.Image,
                     this.Picto_Selection.Selection_Pos_And_Size);
             }
 
-        // TEXTVARS
-
-        // Verifies if a new textVar exists and if so, update it to the new text and optional styling.
         internal void Update_Text_Var(
             Text_Var_Name_Type text_var_label_to_update,
             string new_text, Font_Name_Type new_font_name,

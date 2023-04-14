@@ -5,7 +5,7 @@ namespace GotchiTaMm;
 
 internal class Mouse
     {
-        internal SDL_Point Position = new SDL_Point();
+        internal SDL_Point Position;
         internal readonly int[] Buttons = new int[4];
     }
 
@@ -21,7 +21,7 @@ internal class Subsystem_Input
         //
 
         internal readonly Mouse Mouse;
-        internal readonly Keyboard Keyboard;
+        private readonly Keyboard _keyboard;
         internal string App_In = "";
         private const int _APP_IN_LIMIT = 5;
 
@@ -31,7 +31,7 @@ internal class Subsystem_Input
         private Subsystem_Input()
             {
                 this.Mouse = new Mouse();
-                this.Keyboard = new Keyboard();
+                this._keyboard = new Keyboard();
             }
 
         public static Subsystem_Input Instance => _Lazy_Instance.Value;
@@ -41,7 +41,7 @@ internal class Subsystem_Input
         public void OnKeyDown(SDL_Keysym keysym)
             {
                 Console.WriteLine($"Key down: {keysym.scancode}");
-                this.Keyboard.State[(int)keysym.scancode] = 1;
+                this._keyboard.State[(int)keysym.scancode] = 1;
 
                 if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
                     {
@@ -82,7 +82,7 @@ internal class Subsystem_Input
         public void On_Key_Up(SDL_Keysym keysym)
             {
                 //Console.WriteLine($"Key up: {keysym.scancode}");
-                this.Keyboard.State[(int)keysym.scancode] = 0;
+                this._keyboard.State[(int)keysym.scancode] = 0;
             }
 
         public void On_Mouse_Down(SDL_MouseButtonEvent mouse_button_event)
