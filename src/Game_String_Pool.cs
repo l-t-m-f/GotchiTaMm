@@ -3,23 +3,23 @@
 internal static class Game_String_Pool
     {
 
-        internal class StringPoolEntry
+        internal class String_Pool_Entry
             {
                 internal readonly string Text;
                 internal readonly Font_Name_Type Font;
-                internal readonly int SizeFactor;
+                internal readonly int Size_Factor;
 
-                public StringPoolEntry(string text, Font_Name_Type font, int size_factor)
+                public String_Pool_Entry(string text, Font_Name_Type font, int size_factor)
                     {
                         this.Text = text;
                         this.Font = font;
-                        this.SizeFactor = size_factor;
+                        this.Size_Factor = size_factor;
                     }
             }
 
-        internal static readonly List<StringPoolEntry> Data = new()
+        internal static readonly List<String_Pool_Entry> Data = new()
             {
-                new StringPoolEntry("Test", Font_Name_Type.BLUE_SCREEN, 4),
-                new StringPoolEntry("Enter Time: ", Font_Name_Type.RAINY_HEARTS, 5),
+                new String_Pool_Entry("Test", Font_Name_Type.BLUE_SCREEN, 4),
+                new String_Pool_Entry("Enter Time: ", Font_Name_Type.RAINY_HEARTS, 5),
             };
     }

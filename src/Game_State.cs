@@ -2,6 +2,7 @@
 
 internal abstract class Game_State
     {
+        internal bool Lights_Out;
     }
 
 internal class Game_State_Start : Game_State

@@ -99,8 +99,9 @@ internal class Main_App
                             $"There was an issue starting SDL_image:\n{SDL_GetError()}!");
                     }
                 
+                Subsystem_UI.Instance.Init();
                 Subsystem_Imaging.Instance.Make_Atlas();
-                
+
             }
         
         
@@ -114,11 +115,8 @@ internal class Main_App
                 // IntPtr.Zero, ref 
                 // Subsystem_Imaging.Instance
                 // .background_rect);
-
-                SDL_RenderCopy(Renderer, Subsystem_Imaging.Instance
-                    .Sprite_Atlas.Get_Atlas_Image("Background"), IntPtr.Zero, IntPtr.Zero);
                 
-                //Game.Instance.scene.Draw();
+                Game.Instance.Scene.Draw();
                 //Subsystem_UI.Instance.Draw();
 
                 SDL_RenderPresent(Renderer);
@@ -163,7 +161,7 @@ internal class Main_App
                         return;
                     }
 
-                foreach(Button b in Subsystem_Ui.Instance.Buttons_Dictionary.Values)
+                foreach(Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values)
                     {
                         if (b.TestMouseOverlap() != true)
                             {

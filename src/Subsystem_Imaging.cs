@@ -1,8 +1,10 @@
 ﻿#undef DEBUG
 
 using System.Runtime.InteropServices;
+using static GotchiTaMm.Main_App;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
+using static SDL2.SDL_ttf;
 
 namespace GotchiTaMm;
 
@@ -219,5 +221,35 @@ public class Subsystem_Imaging
                 var b = (byte)((pixel >> 16) & 0xFF);
                 var a = (byte)((pixel >> 24) & 0xFF);
                 return (r, g, b, a);
+            }
+        
+        
+        internal IntPtr Create_Text_Texture_Pointer(string text,
+            Font_Name_Type font_name, int font_size_factor = 4,
+            SDL_Color color = new())
+            {
+                IntPtr font_to_use =
+                    Subsystem_UI.Instance.Fonts_Dictionary.GetValueOrDefault
+                    (font_name)![
+                        font_size_factor];
+
+                IntPtr rendered_text_surface =
+                    TTF_RenderUTF8_Blended(font_to_use, text, color);
+                if (rendered_text_surface == IntPtr.Zero)
+                    {
+                        Console.WriteLine(
+                            "There was a problem creating textvar pointer");
+                    }
+
+                IntPtr text_texture =
+                    SDL_CreateTextureFromSurface(Renderer,
+                        rendered_text_surface);
+                if (text_texture == IntPtr.Zero)
+                    {
+                        Console.WriteLine(
+                            "There was a problem creating text image pointer");
+                    }
+
+                return text_texture;
             }
     }

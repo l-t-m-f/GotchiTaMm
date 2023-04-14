@@ -124,6 +124,14 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                 return final_texture;
             }
 
+        internal SDL_Rect Get_Atlas_Image_Rect(string short_filename)
+            {
+                var full_filename =
+                    $"{Subsystem_Imaging.DIRECTORY_PATH}\\{short_filename}.png";
+                Atlas_Entry? entry = this.Entries.FirstOrDefault(t => t.Filename == full_filename);
+                return entry?.Rectangle ?? default;
+            }
+
         /// <summary>
         /// This function attempts to find a suitable node in the atlas tree.
         /// If a suitable node is found, it is marked as used and the children

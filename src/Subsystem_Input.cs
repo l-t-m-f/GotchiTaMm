@@ -132,7 +132,7 @@ internal class Subsystem_Input
                         return;
                     }
 
-                Subsystem_Ui.Instance.Set_Or_Update_Text_Var(render_target, this.App_In, Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                Subsystem_UI.Instance.Set_Or_Update_Text_Var(render_target, this.App_In, Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
             }
 
         private void Push_Into_App_In(SDL_Keysym keysym, bool render = false, Text_Var_Name_Type render_target = 0, bool is_time = false)
@@ -157,7 +157,7 @@ internal class Subsystem_Input
                         return;
                     }
 
-                Subsystem_Ui.Instance.Set_Or_Update_Text_Var(render_target, this.App_In, Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                Subsystem_UI.Instance.Set_Or_Update_Text_Var(render_target, this.App_In, Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
 
             }
 
@@ -169,10 +169,10 @@ internal class Subsystem_Input
                 switch (Game.Instance.State)
                     {
                         case Game_State_Start:
-                            Subsystem_Ui.Instance.Try_Input_Time();
+                            Subsystem_UI.Instance.Try_Input_Time();
                             break;
                         case Game_State_Pet_View:
-                            Subsystem_Ui.Instance.PictoSelection.Select_Next();
+                            Subsystem_UI.Instance.Picto_Selection.Select_Next();
                             break;
                     }
             }
@@ -181,7 +181,7 @@ internal class Subsystem_Input
                 Console.WriteLine(value: "Execute!");
 
                 int current_picto = 
-                    Subsystem_Ui.Instance.PictoSelection.Cursor_Index;
+                    Subsystem_UI.Instance.Picto_Selection.Cursor_Index;
 
                 switch (current_picto)
                     {                
@@ -213,7 +213,7 @@ internal class Subsystem_Input
 
                         case 6:
                             // STATUS
-                            Subsystem_Ui.Instance.Meter(Game.Instance.Pet);
+                            Subsystem_UI.Instance.Meter(Game.Instance.Pet);
                             break;
 
                         case 7:
@@ -230,7 +230,7 @@ internal class Subsystem_Input
                 Console.WriteLine("Cancel!");
                 if (Game.Instance.State is Game_State_Pet_View)
                     {
-                        Subsystem_Ui.Instance.PictoSelection.Clear_Select();
+                        Subsystem_UI.Instance.Picto_Selection.Clear_Select();
                     }
             }
     }
