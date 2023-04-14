@@ -1,4 +1,6 @@
-﻿using static SDL2.SDL;
+﻿#define DEBUG
+
+using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
 
@@ -28,14 +30,14 @@ internal class Main_App
                 Clock = new Thread(() => ClockThread());
                 Animate = new Thread(() => AnimateThread());
 
-                Task<Save_State> load_data = Subsystem_Serialization.Instance.LoadGame();
+                Task<Save_State> load_data = Subsystem_Serialization.Instance.Load_Game();
                 Subsystem_Serialization.Instance.SavedGame = load_data.Result;
 
                 Console.WriteLine(
-                    Subsystem_Serialization.Instance.SavedGame.LastTime ==
+                    Subsystem_Serialization.Instance.SavedGame.Last_Time ==
                     DateTime.MinValue
                         ? "This is the first time the program has been run."
-                        : $"The program was last shutdown at: {Subsystem_Serialization.Instance.SavedGame.LastTime}");
+                        : $"The program was last shutdown at: {Subsystem_Serialization.Instance.SavedGame.Last_Time}");
 
                 Clock.Start();
                 Animate.Start();
@@ -95,7 +97,7 @@ internal class Main_App
                             $"There was an issue starting SDL_image:\n{SDL_GetError()}!");
                     }
                 
-                Subsystem_Imaging.instance.Make_Atlas();
+                Subsystem_Imaging.Instance.Make_Atlas();
                 
             }
         
@@ -104,7 +106,16 @@ internal class Main_App
             {
                 SDL_SetRenderDrawColor(Renderer, 155, 155, 155, 255);
                 SDL_RenderClear(Renderer);
+                // SDL_RenderCopy(Renderer, SDL_CreateTextureFromSurface
+                // (Renderer, Subsystem_Imaging.Instance
+                // .Sprite_Atlas.Master_Surface), 
+                // IntPtr.Zero, ref 
+                // Subsystem_Imaging.Instance
+                // .background_rect);
 
+                SDL_RenderCopy(Renderer, Subsystem_Imaging.Instance
+                    .Sprite_Atlas.Get_Atlas_Image("Background"), IntPtr.Zero, IntPtr.Zero);
+                
                 Game.Instance.scene.Draw();
                 Subsystem_UI.Instance.Draw();
 
@@ -169,7 +180,7 @@ internal class Main_App
                 // Release unsafe pointer
                 //Marshal.FreeHGlobal(rectangle_ptr);
 
-                Subsystem_Serialization.Instance.SaveGame(DateTime.Now);
+                Subsystem_Serialization.Instance.Save_Game(DateTime.Now);
                 TTF_Quit();
                 SDL_Quit();
 

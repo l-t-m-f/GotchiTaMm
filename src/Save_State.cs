@@ -1,11 +1,9 @@
-﻿using System;
-
-namespace GotchiTaMm;
+﻿namespace GotchiTaMm;
 
 [Serializable]
 public class Save_State
     {
-        public DateTime LastTime { get; set; }
+        public DateTime Last_Time { get; set; }
 
         internal Gotchi_Pet Pet { get; set; }
 

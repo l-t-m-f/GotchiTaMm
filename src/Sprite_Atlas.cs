@@ -1,6 +1,4 @@
-﻿using System;
-using SDL2;
-using static SDL2.SDL;
+﻿using static SDL2.SDL;
 
 namespace GotchiTaMm;
 
@@ -8,24 +6,23 @@ internal class Sprite_Atlas : IComparer<IntPtr>
     {
         internal const int ATLAS_SIZE = 700;
         private const int _PADDING = 4;
-
-        public List<AtlasEntry> entries { get; }
-
-        internal IntPtr[] surface_data = new IntPtr[50]; // surfaces
-        public readonly AtlasNode first;
-        private readonly LinkedList<AtlasNode> _nodes = new();
-        internal readonly IntPtr master_surface;
+        public List<Atlas_Entry> Entries { get; set; }
+        internal IntPtr[] Surface_Data = new IntPtr[50]; // surfaces
+        public readonly Atlas_Node First;
+        private readonly LinkedList<Atlas_Node> _nodes = new();
+        internal readonly IntPtr Master_Surface;
 
         public Sprite_Atlas()
             {
-                this.entries = new List<AtlasEntry>();
-                var root_node = new AtlasNode(0, 0, ATLAS_SIZE, ATLAS_SIZE);
+                this.Entries = new List<Atlas_Entry>();
+                var root_node = new Atlas_Node(0, 0, ATLAS_SIZE, ATLAS_SIZE);
                 this._nodes.AddLast(root_node);
-                this.master_surface = SDL_CreateRGBSurfaceWithFormat(0, ATLAS_SIZE,
+                this.Master_Surface = SDL_CreateRGBSurfaceWithFormat(0,
+                    ATLAS_SIZE,
                     ATLAS_SIZE,
                     32,
                     SDL_PIXELFORMAT_ARGB8888); // used to be RGBA8888
-                this.first = root_node;
+                this.First = root_node;
             }
 
         // IComparer Interface
@@ -41,10 +38,9 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                 if (SDL_QueryTexture(
                         SDL_CreateTextureFromSurface(Main_App.Renderer,
                             surface_a),
-                        out _,
-                        out _, out var height_x, out _) < 0)
+                        out uint _,
+                        out int _, out int height_x, out int _) < 0)
                     {
-
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                             $"There was an issue querying the texture \n{SDL_GetError()}");
                         return 0;
@@ -53,16 +49,16 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                 if (SDL_QueryTexture(
                         SDL_CreateTextureFromSurface(Main_App.Renderer,
                             surface_b),
-                        out _,
-                        out _, out var height_y, out _) < 0)
+                        out uint _,
+                        out int _, out int height_y, out int _) >= 0)
                     {
-
-                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                            $"There was an issue querying the texture \n{SDL_GetError()}");
-                        return 0;
+                        return height_y.CompareTo(height_x);
                     }
 
-                return height_y.CompareTo(height_x);
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                    $"There was an issue querying the texture \n{SDL_GetError()}");
+                return 0;
+
                 // Descending order
             }
 
@@ -78,14 +74,14 @@ internal class Sprite_Atlas : IComparer<IntPtr>
         /// </summary>
         /// <param name="short_filename"></param>
         /// <returns></returns>
-        public IntPtr get_atlas_image(string short_filename)
+        public IntPtr Get_Atlas_Image(string short_filename)
             {
                 var full_filename =
                     $"{Subsystem_Imaging.DIRECTORY_PATH}\\{short_filename}.png";
-                AtlasEntry? entry = null;
-                foreach (var t in this.entries)
+                Atlas_Entry? entry = null;
+                foreach (var t in Entries)
                     {
-                        if (t.filename != full_filename) continue;
+                        if (t.Filename != full_filename) continue;
                         entry = t;
                         break;
                     }
@@ -95,32 +91,31 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                         return 0;
                     }
 
-                var extraction_rectangle = entry.rectangle;
+                SDL_Rect extraction_rectangle = entry.Rectangle;
 
                 // Create a new surface to hold the extracted image
-                var extracted_surface = SDL_CreateRGBSurfaceWithFormat(0,
+                IntPtr extracted_surface = SDL_CreateRGBSurfaceWithFormat(0,
                     extraction_rectangle.w, extraction_rectangle.h, 32,
                     SDL_PIXELFORMAT_ARGB8888); // used to be RGBA8888
                 if (extracted_surface == IntPtr.Zero)
                     {
-
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                             $"There was an issue creating the extracted surface:\n{SDL_GetError()}");
                         return IntPtr.Zero;
                     }
 
                 // Extract the image from the MasterSurface using the extraction rectangle
-                if (SDL_BlitSurface(this.master_surface, ref extraction_rectangle,
+                if (SDL_BlitSurface(this.Master_Surface,
+                        ref extraction_rectangle,
                         extracted_surface, IntPtr.Zero) != 0)
                     {
-
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                             $"There was an issue extracting the image:\n{SDL_GetError()}");
                         SDL_FreeSurface(extracted_surface);
                         return IntPtr.Zero;
                     }
 
-                var final_texture =
+                IntPtr final_texture =
                     SDL_CreateTextureFromSurface(Main_App.Renderer,
                         extracted_surface);
 
@@ -139,42 +134,43 @@ internal class Sprite_Atlas : IComparer<IntPtr>
         /// <param name="required_w">Width dimension required for the node.</param>
         /// <param name="required_h">Height dimension required for the node.</param>
         /// <returns></returns>
-        public static AtlasNode? find_node(AtlasNode parent_node,
+        public static Atlas_Node? find_node(Atlas_Node parent_node,
             int required_w, int required_h)
             {
-                if (parent_node.used)
+                if (parent_node.Used)
                     {
-                        if (parent_node.children == null)
+                        if (parent_node.Children == null)
                             {
 #if DEBUG
                                 Console.WriteLine(
-                                    $"Node ({parent_node.x}, {parent_node.y}, " +
-                                    $"{parent_node.width}, {parent_node.height}) is used but has no children.");
+                                    $"Node ({parent_node.X}, {parent_node.Y}, " +
+                                    $"{parent_node.Width}, {parent_node.Height}) is used but has no children.");
 #endif
                                 return null;
                             }
 
-                        var node = find_node(parent_node.children[0],
-                                       required_w, required_h) ??
-                                   find_node(parent_node.children[1],
-                                       required_w, required_h);
+                        Atlas_Node? node = find_node(parent_node.Children[0],
+                                              required_w, required_h) ??
+                                          find_node(parent_node.Children[1],
+                                              required_w, required_h);
                         return node;
                     }
-                else if (required_w <= parent_node.width &&
-                         required_h <= parent_node.height)
+
+                if (required_w <= parent_node.Width &&
+                    required_h <= parent_node.Height)
                     {
 #if DEBUG
                         Console.WriteLine(
-                            $"Found a suitable node at ({parent_node.x}, {parent_node.y}, " +
-                            $"{parent_node.width}, {parent_node.height}) for dimensions ({required_w}, {required_h})");
+                            $"Found a suitable node at ({parent_node.X}, {parent_node.Y}, " +
+                            $"{parent_node.Width}, {parent_node.Height}) for dimensions ({required_w}, {required_h})");
 #endif
                         split_node(parent_node, required_w, required_h);
                         return parent_node;
                     }
 
 #if DEBUG
-                Console.WriteLine($"Node ({parent_node.x}, {parent_node.y}, " +
-                                  $"{parent_node.width}, {parent_node.height}) is too small for dimensions ({required_w}, {required_h})");
+                Console.WriteLine($"Node ({parent_node.X}, {parent_node.Y}, " +
+                                  $"{parent_node.Width}, {parent_node.Height}) is too small for dimensions ({required_w}, {required_h})");
 #endif
                 return null;
             }
@@ -185,82 +181,88 @@ internal class Sprite_Atlas : IComparer<IntPtr>
         /// <param name="parent_node"></param>
         /// <param name="used_w"></param>
         /// <param name="used_h"></param>
-        private static void split_node(AtlasNode parent_node, int used_w,
+        private static void split_node(Atlas_Node parent_node, int used_w,
             int used_h)
             {
-                parent_node.used = true;
+                parent_node.Used = true;
 
-                var width_padding = (parent_node.width - used_w >= _PADDING)
+                int width_padding = parent_node.Width - used_w >= _PADDING
                     ? _PADDING
                     : 0;
-                var height_padding = (parent_node.height - used_h >= _PADDING)
+                int height_padding = parent_node.Height - used_h >= _PADDING
                     ? _PADDING
                     : 0;
 
-                if (parent_node.width - used_w - width_padding < 0 ||
-                    parent_node.height - used_h - height_padding < 0)
+                if (parent_node.Width - used_w - width_padding < 0 ||
+                    parent_node.Height - used_h - height_padding < 0)
                     {
-
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                            $"Invalid split at Node ({parent_node.x}, {parent_node.y}, " +
-                            $"{parent_node.width}, {parent_node.height}) with dimensions ({used_w}, {used_h})");
+                            $"Invalid split at Node ({parent_node.X}, {parent_node.Y}, " +
+                            $"{parent_node.Width}, {parent_node.Height}) with dimensions ({used_w}, {used_h})");
                         return;
                     }
 
-                parent_node.children = new AtlasNode[2];
-                parent_node.children[0] =
-                    new AtlasNode(parent_node.x + used_w + width_padding,
-                        parent_node.y,
-                        parent_node.width - used_w - width_padding, used_h);
-                parent_node.children[1] =
-                    new AtlasNode(parent_node.x,
-                        parent_node.y + used_h + height_padding,
-                        parent_node.width,
-                        parent_node.height - used_h - height_padding);
+                parent_node.Children = new Atlas_Node[2];
+                parent_node.Children[0] =
+                    new Atlas_Node(parent_node.X + used_w + width_padding,
+                        parent_node.Y,
+                        parent_node.Width - used_w - width_padding, used_h);
+                parent_node.Children[1] =
+                    new Atlas_Node(parent_node.X,
+                        parent_node.Y + used_h + height_padding,
+                        parent_node.Width,
+                        parent_node.Height - used_h - height_padding);
+            }
+        
+        public int Get_Index_Of_Surface(IntPtr surface)
+            {
+                int index = Array.IndexOf(Surface_Data, surface);
+                return index;
             }
     }
-
 
 /**
  * A node in the atlas tree.
  * As the tree is created, more nodes are made by splitting the last node
  */
-public class AtlasNode
+public class Atlas_Node
     {
-        public bool used { get; set; }
-        public int x { get; }
-        public int y { get; }
-        public int width { get; set; }
+        public bool Used { get; set; }
+        public int X { get; }
+        public int Y { get; }
+        public int Width { get; set; }
 
-        public int height { get; set; }
+        public int Height { get; set; }
 
         // Children can be null or have valid elements
-        public AtlasNode[]? children { get; set; }
+        public Atlas_Node[]? Children { get; set; }
 
-        public AtlasNode(int x, int y, int width, int height)
+        public Atlas_Node(int x, int y, int width, int height)
             {
-                this.x = x;
-                this.y = y;
-                this.width = width;
-                this.height = height;
-                this.children = null;
+                this.X = x;
+                this.Y = y;
+                this.Width = width;
+                this.Height = height;
+                this.Children = null;
             }
     }
 
 /**
- * Entries represent finalized images in the atlas with their filename,
- * so they can be identified easily, drawing rectangle, and a rotation flag.
+ * Represents a finalized image in the atlas by filename, drawing rectangle, and a rotation flag.
+ * These can be used to blit from the image with ease.
  */
-internal class AtlasEntry
+internal class Atlas_Entry
     {
-        public string filename { get; }
-        public SDL_Rect rectangle { get; set; }
-        public bool rotated { get; set; }
+        public string Filename { get; }
+        public SDL_Rect Rectangle { get; set; }
+        public bool Rotated { get; set; }
 
-        public AtlasEntry(string filename, SDL_Rect rectangle, bool rotated)
+        public Atlas_Entry(string filename, SDL_Rect 
+        rectangle = default, 
+        bool rotated = false)
             {
-                this.filename = filename;
-                this.rectangle = rectangle;
-                this.rotated = rotated;
+                this.Filename = filename;
+                this.Rectangle = rectangle;
+                this.Rotated = rotated;
             }
     }

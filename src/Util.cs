@@ -19,8 +19,8 @@ public static class Util
 
         public static void Draw_Ellipsoid(IntPtr renderer, SDL_Rect circle)
             {
-                double pih = Math.PI / 2;
-                const int prec = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
+                const double HALF_PI = Math.PI / 2;
+                const int PRECISION = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
                 double theta = 0; // angle that will be increased each loop
 
                 int x = (int)(circle.w * Math.Cos(theta));//start point
@@ -28,8 +28,8 @@ public static class Util
                 int x1 = x;
                 int y1 = y;
 
-                double step = pih / prec; // amount to add to theta each time (degrees)
-                for (theta = step ; theta <= pih ; theta += step)//step through only a 90 arc (1 quadrant)
+                double step = HALF_PI / PRECISION; // amount to add to theta each time (degrees)
+                for (theta = step ; theta <= HALF_PI ; theta += step)//step through only a 90 arc (1 quadrant)
                     {
                         //get new point location
                         x1 = (int)(circle.w * Math.Cos(theta) + 0.5); //new point (+.5 is a quick rounding method)
@@ -59,8 +59,8 @@ public static class Util
             }
         public static void FillEllipsoid(IntPtr renderer, SDL_Rect circle)
             {
-                double pih = Math.PI / 2;
-                const int prec = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
+                const double HALF_PI = Math.PI / 2;
+                const int PRECISION = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
                 double theta = 0; // angle that will be increased each loop
 
                 int x = (int)(circle.w * Math.Cos(theta));//start point
@@ -71,8 +71,8 @@ public static class Util
                 SDL_RenderDrawLine(renderer, circle.x - x1, circle.y - y1, circle.x + x1, circle.y - y1);
                 SDL_RenderDrawLine(renderer, circle.x - x1, circle.y + y1, circle.x + x1, circle.y + y1);
 
-                double step = pih / prec; // amount to add to theta each time (degrees)
-                for (; theta <= pih + step ; theta += step)//step through only a 90 arc (1 quadrant)
+                double step = HALF_PI / PRECISION; // amount to add to theta each time (degrees)
+                for (; theta <= HALF_PI + step ; theta += step)//step through only a 90 arc (1 quadrant)
                     {
                         //get new point location
                         x1 = (int)(circle.w * Math.Cos(theta) + 0.5); //new point (+.5 is a quick rounding method)

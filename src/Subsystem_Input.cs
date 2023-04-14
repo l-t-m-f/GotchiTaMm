@@ -198,7 +198,7 @@ internal class Subsystem_Input
 
                         case 4:
                             // LIGHTS
-                            Game.Instance.scene.ToggleLight();
+                            Game.Instance.scene.Toggle_Light();
                             break;
 
                         case 5:

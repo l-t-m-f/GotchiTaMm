@@ -10,7 +10,7 @@ internal class Subsystem_Serialization
 
         // ENCRYPTION
 
-        static byte[] secret = {
+        private static readonly byte[] _Secret = {
                 0x0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
                 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1
             };
@@ -19,19 +19,15 @@ internal class Subsystem_Serialization
 
         //Singleton
 
-        internal static readonly Lazy<Subsystem_Serialization> lazyInstance = new Lazy<Subsystem_Serialization>(() => new Subsystem_Serialization());
+        private static readonly Lazy<Subsystem_Serialization> _Lazy_Instance = new Lazy<Subsystem_Serialization>(() => new Subsystem_Serialization());
         private Subsystem_Serialization()
             {
             }
 
-        public static Subsystem_Serialization Instance {
-                get {
-                        return lazyInstance.Value;
-                    }
-            }
+        public static Subsystem_Serialization Instance => _Lazy_Instance.Value;
 
         //
-        internal void SaveGame(DateTime saveTime)
+        internal void Save_Game(DateTime save_time)
             {
                 try
                     {
@@ -42,24 +38,24 @@ internal class Subsystem_Serialization
                                 return;
                             }
 
-                        this.SavedGame.LastTime = saveTime;
+                        this.SavedGame.Last_Time = save_time;
 
-                        using FileStream fileStream = new("MEM", FileMode.OpenOrCreate);
+                        using FileStream file_stream = new("MEM", FileMode.OpenOrCreate);
                         using Aes aes = Aes.Create();
-                        aes.Key = secret;
+                        aes.Key = _Secret;
 
                         byte[] iv = aes.IV;
-                        fileStream.Write(iv, 0, iv.Length);
+                        file_stream.Write(iv, 0, iv.Length);
 
-                        using CryptoStream cryptoStream = new(
-                            fileStream,
+                        using CryptoStream crypto_stream = new(
+                            file_stream,
                             aes.CreateEncryptor(),
                             CryptoStreamMode.Write);
-                        using StreamWriter encryptWriter = new(cryptoStream);
+                        using StreamWriter encrypt_writer = new(crypto_stream);
 
-                        string jsonString = JsonSerializer.Serialize(this.SavedGame);
-                        byte[] jsonData = Encoding.UTF8.GetBytes(jsonString);
-                        cryptoStream.Write(jsonData, 0, jsonData.Length);
+                        string json_string = JsonSerializer.Serialize(this.SavedGame);
+                        byte[] json_data = Encoding.UTF8.GetBytes(json_string);
+                        crypto_stream.Write(json_data, 0, json_data.Length);
 
                         Console.WriteLine("The file was encrypted.");
                     }
@@ -69,10 +65,10 @@ internal class Subsystem_Serialization
                     }
             }
 
-        internal async Task<Save_State> LoadGame()
+        internal async Task<Save_State> Load_Game()
             {
                 Save_State? save = new Save_State {
-                        LastTime = DateTime.MinValue,
+                        Last_Time = DateTime.MinValue,
                     };
 
                 try
@@ -80,30 +76,34 @@ internal class Subsystem_Serialization
 
                         if (File.Exists("MEM"))
                             {
-                                using FileStream fileStream = new("MEM", FileMode.Open);
+                                await using FileStream file_stream = new("MEM", FileMode.Open);
                                 using Aes aes = Aes.Create();
 
                                 byte[] iv = new byte[aes.IV.Length];
-                                int numBytesToRead = aes.IV.Length;
-                                int numBytesRead = 0;
-                                while (numBytesToRead > 0)
+                                int num_bytes_to_read = aes.IV.Length;
+                                int num_bytes_read = 0;
+                                while (num_bytes_to_read > 0)
                                     {
-                                        int n = fileStream.Read(iv, numBytesRead, numBytesToRead);
-                                        if (n == 0) break;
-                                        numBytesRead += n;
-                                        numBytesToRead -= n;
+                                        int n = file_stream.Read(iv, num_bytes_read, num_bytes_to_read);
+                                        if (n == 0)
+                                            {
+                                                break;
+                                            }
+                                        num_bytes_read += n;
+                                        num_bytes_to_read -= n;
                                     }
 
-                                using CryptoStream cryptoStream = new(fileStream, aes.CreateDecryptor(secret, iv), CryptoStreamMode.Read);
+                                await using CryptoStream crypto_stream = 
+                                    new(file_stream, aes.CreateDecryptor(_Secret, iv), CryptoStreamMode.Read);
 
-                                using MemoryStream memoryStream = new();
-                                await cryptoStream.CopyToAsync(memoryStream);
-                                memoryStream.Position = 0;
+                                using MemoryStream memory_stream = new();
+                                await crypto_stream.CopyToAsync(memory_stream);
+                                memory_stream.Position = 0;
 
-                                string jsonString = Encoding.UTF8.GetString(memoryStream.ToArray());
-                                if (jsonString != "{}")
+                                string json_string = Encoding.UTF8.GetString(memory_stream.ToArray());
+                                if (json_string != "{}")
                                     {
-                                        save = JsonSerializer.Deserialize<Save_State>(jsonString);
+                                        save = JsonSerializer.Deserialize<Save_State>(json_string);
                                     }
                             }
                     }
@@ -112,14 +112,15 @@ internal class Subsystem_Serialization
                         Console.WriteLine($"The decryption failed. {ex}");
                     }
 
-                if (save == null)
+                if (save != null)
                     {
-
-                        Console.WriteLine("Save is corrupt, therefore, must reset save.");
-                        save = new Save_State {
-                                LastTime = DateTime.MinValue,
-                            };
+                        return save;
                     }
+
+                Console.WriteLine("Save is corrupt, therefore, must reset save.");
+                save = new Save_State {
+                        Last_Time = DateTime.MinValue
+                    };
 
                 return save;
             }

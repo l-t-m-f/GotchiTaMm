@@ -1,63 +1,71 @@
 ﻿#undef DEBUG
 
-using static GotchiTaMm.Main_App;
 using System.Runtime.InteropServices;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
 
 namespace GotchiTaMm;
 
-internal class Subsystem_Imaging
+/// <summary>
+/// Class to load and store all images in the game.
+/// </summary>
+public class Subsystem_Imaging
     {
         internal const string DIRECTORY_PATH = "images";
         private const string _SEARCH_PATTERN = "*.png";
-        private Sprite_Atlas Sprite_Atlas { get; set; }
+        internal Sprite_Atlas Sprite_Atlas { get; set; }
 
-        //Singleton
-        private static readonly Lazy<Subsystem_Imaging> _LAZY_INSTANCE = 
-            new Lazy<Subsystem_Imaging>(() => new Subsystem_Imaging());
+        //Lazy Singleton implementation
+        private static readonly Lazy<Subsystem_Imaging> _Lazy_Instance =
+            new(() => new Subsystem_Imaging());
+
         private Subsystem_Imaging()
             {
                 this.Sprite_Atlas = new Sprite_Atlas();
             }
 
-        public static Subsystem_Imaging instance => _LAZY_INSTANCE.Value;
+        public static Subsystem_Imaging Instance => _Lazy_Instance.Value;
 
+        /// <summary>
+        /// Create a Sprite_Atlas object from the images in the images directory.
+        /// </summary>
         internal void Make_Atlas()
             {
-                // Open the directory
                 string[] file_names =
                     Directory.GetFiles(DIRECTORY_PATH, _SEARCH_PATTERN);
+                Dictionary<IntPtr, Atlas_Entry> surface_to_entry_mapping =
+                    new Dictionary<IntPtr, Atlas_Entry>();
 
                 foreach (string file_name in file_names)
                     {
 #if DEBUG
-                        Console.WriteLine(file_path);
+        Console.WriteLine(file_path);
 #endif
-                        string file_path = Path.GetRelativePath(".", file_name);
-                        this.Sprite_Atlas.surface_data[
-                                this.Sprite_Atlas.entries.Count] =
-                            IMG_Load(file_path);
-                        this.Sprite_Atlas.entries.Add(new AtlasEntry(file_path,
-                            new SDL_Rect
-                                    { x = 0, y = 0, w = 0, h = 0 }, false));
+                        int last_i = this.Sprite_Atlas.Entries.Count;
+                        IntPtr surface = IMG_Load(file_name);
+                        this.Sprite_Atlas.Surface_Data[last_i] = surface;
+                        Atlas_Entry entry = new Atlas_Entry(file_name);
+                        this.Sprite_Atlas.Entries.Add(entry);
+                        surface_to_entry_mapping[surface] = entry;
                     }
 
-                Array.Resize(ref this.Sprite_Atlas.surface_data,
-                    this.Sprite_Atlas.entries.Count);
-                Array.Sort(this.Sprite_Atlas.surface_data, this.Sprite_Atlas);
+                Array.Resize(ref this.Sprite_Atlas.Surface_Data,
+                    this.Sprite_Atlas.Entries.Count);
+                Array.Sort(this.Sprite_Atlas.Surface_Data, this.Sprite_Atlas);
 
+                // Sort the Entries list based on the sorted Surface_Data array
+                this.Sprite_Atlas.Entries = this.Sprite_Atlas.Surface_Data.Select(surface => surface_to_entry_mapping[surface]).ToList();
 
-                for (var i = 0; i < this.Sprite_Atlas.surface_data.Length; i++)
+                for (var i = 0; i < this.Sprite_Atlas.Surface_Data.Length; i++)
                     {
                         SDL_QueryTexture(
                             SDL_CreateTextureFromSurface(Main_App.Renderer,
-                                this.Sprite_Atlas.surface_data[i]), 
+                                this.Sprite_Atlas.Surface_Data[i]),
                             out uint _, out int _, out int w, out int h);
 
                         var rotated = false;
-                        AtlasNode? found_node = Sprite_Atlas.find_node(
-                            this.Sprite_Atlas.first, w,
+                        Atlas_Node? found_node = Sprite_Atlas.find_node(
+                            this.Sprite_Atlas.First, w,
                             h);
 
                         if (found_node == null)
@@ -65,7 +73,7 @@ internal class Subsystem_Imaging
                                 rotated = true;
                                 found_node =
                                     Sprite_Atlas.find_node(
-                                        this.Sprite_Atlas.first,
+                                        this.Sprite_Atlas.First,
                                         h, w);
                             }
 
@@ -76,49 +84,58 @@ internal class Subsystem_Imaging
 #endif
                                 if (rotated)
                                     {
-                                        found_node.height = w;
-                                        found_node.width = h;
+                                        found_node.Height = w;
+                                        found_node.Width = h;
                                     }
 
                                 var dest = new SDL_Rect
                                     {
-                                        x = found_node.x,
-                                        y = found_node.y,
-                                        w = found_node.width,
-                                        h = found_node.height
+                                        x = found_node.X,
+                                        y = found_node.Y,
+                                        w = w,
+                                        h = h
                                     };
 
-                                this.Sprite_Atlas.entries[i] =
-                                    new AtlasEntry(
-                                        this.Sprite_Atlas.entries[i].filename,
+                                this.Sprite_Atlas.Entries[i] =
+                                    new Atlas_Entry(
+                                        this.Sprite_Atlas.Entries[i]
+                                            .Filename,
                                         dest, rotated);
 
                                 if (rotated == false)
                                     {
                                         SDL_BlitSurface(
-                                            this.Sprite_Atlas.surface_data[i],
+                                            this.Sprite_Atlas.Surface_Data[i],
                                             IntPtr.Zero,
-                                            this.Sprite_Atlas.master_surface,
+                                            this.Sprite_Atlas.Master_Surface,
                                             ref dest);
                                     }
                                 else
                                     {
                                         IntPtr result =
-                                            blit_rotated(this.Sprite_Atlas.surface_data[i]);
+                                            Rotate_Surface(this.Sprite_Atlas
+                                                .Surface_Data[i]);
                                         if (result != IntPtr.Zero)
                                             {
                                                 SDL_BlitSurface(result,
-                                                    IntPtr.Zero, this.Sprite_Atlas.master_surface,
+                                                    IntPtr.Zero,
+                                                    this.Sprite_Atlas
+                                                        .Master_Surface,
                                                     ref dest);
                                             }
                                     }
                             }
 
-                        SDL_FreeSurface(this.Sprite_Atlas.surface_data[i]);
+                        SDL_FreeSurface(this.Sprite_Atlas.Surface_Data[i]);
                     }
             }
 
-        private static IntPtr blit_rotated(IntPtr source_surface_ptr)
+        /// <summary>
+        /// Rotates a surface 90 degrees clockwise using its pointer.
+        /// </summary>
+        /// <param name="source_surface_ptr"></param>
+        /// <returns></returns>
+        private static IntPtr Rotate_Surface(IntPtr source_surface_ptr)
             {
                 var source_surface =
                     Marshal.PtrToStructure<SDL_Surface>(source_surface_ptr);
@@ -139,7 +156,7 @@ internal class Subsystem_Imaging
                     {
                         for (var x = 0; x < source_surface.w; x++)
                             {
-                                uint pixel = get_pixel(source_surface_ptr, x,
+                                uint pixel = Get_Pixel(source_surface_ptr, x,
                                     y);
 
 #if DEBUG
@@ -150,13 +167,13 @@ internal class Subsystem_Imaging
                                     $"Source Pixel ({x}, {y}): R: {r} G: {g} B: {b} A: {a}");
 #endif
                                 int dest_x = source_surface.h - y - 1;
-                                set_pixel(dest_surface_ptr, dest_x, x, pixel);
+                                Set_Pixel(dest_surface_ptr, dest_x, x, pixel);
 
 #if DEBUG
                                 (byte dest_r, byte dest_g, byte dest_b,
                                         byte dest_a)
                                     =
-                                    get_pixel_color_values(dest_surface_ptr, dest_x, x);
+                                    Get_Pixel_Color_Values(dest_surface_ptr, dest_x, x);
                                 Console.WriteLine(
                                     $"Dest Pixel ({dest_x}, {x}): R: {dest_r} G: {dest_g} B: {dest_b} A: {dest_a}");
 #endif
@@ -169,32 +186,32 @@ internal class Subsystem_Imaging
                 return dest_surface_ptr;
             }
 
-        private static uint get_pixel(IntPtr surface_ptr, int x, int y)
+        private static uint Get_Pixel(IntPtr surface_ptr, int x, int y)
             {
                 var surface =
                     Marshal.PtrToStructure<SDL_Surface>(surface_ptr);
-                const int bytes_per_pixel = 4; //ARGB8888
+                const int BYTES_PER_PIXEL = 4; //ARGB8888
                 IntPtr pixel = surface.pixels + y * surface.pitch +
-                               x * bytes_per_pixel;
+                               x * BYTES_PER_PIXEL;
                 return (uint)Marshal.ReadInt32(pixel);
             }
 
-        private static void set_pixel(IntPtr surface_ptr, int x, int y,
+        private static void Set_Pixel(IntPtr surface_ptr, int x, int y,
             uint new_pixel)
             {
                 var surface =
                     Marshal.PtrToStructure<SDL_Surface>(surface_ptr);
-                const int bytes_per_pixel = 4; //ARGB8888
+                const int BYTES_PER_PIXEL = 4; //ARGB8888
                 IntPtr pixel = surface.pixels + y * surface.pitch +
-                               x * bytes_per_pixel;
+                               x * BYTES_PER_PIXEL;
 
                 Marshal.WriteInt32(pixel, (int)new_pixel);
             }
 
-        private static (byte r, byte g, byte b, byte a) get_pixel_color_values(
+        private static (byte r, byte g, byte b, byte a) Get_Pixel_Color_Values(
             IntPtr surface_ptr, int x, int y)
             {
-                uint pixel = get_pixel(surface_ptr, x, y);
+                uint pixel = Get_Pixel(surface_ptr, x, y);
                 var r = (byte)(pixel & 0xFF);
                 var g = (byte)((pixel >> 8) & 0xFF);
                 var b = (byte)((pixel >> 16) & 0xFF);
