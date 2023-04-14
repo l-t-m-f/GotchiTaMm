@@ -8,25 +8,25 @@ namespace GotchiTaMm;
 /// </summary>
 internal class Clock
     {
-        internal bool clockRunning = false;
+        internal bool Clock_Running = false;
 
         // The total duration of the game. This time is reset when the
         // GotchiPet dies
-        internal TimeSpan totalGameTime;
-        internal TimeSpan ellapsedSessionTime; // time between session start and current DateTime;
+        internal TimeSpan Total_Game_Time;
+        internal TimeSpan Ellapsed_Session_Time; // time between session start and current DateTime;
 
         // The Date and Time at the start of the session
         // Based on a Now DateTime, but the player can configure a local offset
         // which will be applied to the DateTimes for the clock
-        internal DateTime sessionStartDateTime;
+        private readonly DateTime _session_start_date_time;
 
-        internal TimeSpan tsOffset;
+        internal TimeSpan Ts_Offset;
 
         // The Date and Time at the end of the session (Application shutdown)
         // Saved to MEM so that it can be restored and compared with the Now DateTime
-        internal DateTime sessionCurrentDateTime;
+        private readonly DateTime _session_current_date_time;
 
-        internal DateTime sessionEndDateTime;
+        internal DateTime Session_End_DateTime;
 
         // There are two scenarios:
 
@@ -43,33 +43,36 @@ internal class Clock
         /// there is a SaveState. Otherwise, it is initialized when the
         /// player inputs the starting time.
         /// </summary>
-        /// <param name="h"></param>
-        /// <param name="m"></param>
-        /// <param name="s"></param>
+        /// <param name="offset"></param>
         internal Clock(TimeSpan offset)
             {
-                this.sessionStartDateTime = (DateTime.Now).Add(offset);
-                this.sessionCurrentDateTime = this.sessionStartDateTime;
-
+                DateTime session_start_date_time;
+                this._session_start_date_time = (DateTime.Now).Add(offset);
+                this._session_current_date_time = this._session_start_date_time;
+                this.Ts_Offset = default;
+                this.Session_End_DateTime = default;
                 //gameTime = new TimeSpan(h, m, s);
                 //elapsedTime = new TimeSpan(0, 0, 0);
             }
 
-        internal Clock(TimeSpan restoredOffset, TimeSpan restoredTotalGameTime)
+        internal Clock(TimeSpan restored_offset, TimeSpan restored_total_game_time)
             {
-                this.sessionStartDateTime = (DateTime.Now).Add(restoredOffset);
-                this.sessionCurrentDateTime = this.sessionStartDateTime;
-                this.totalGameTime = restoredTotalGameTime;
+                DateTime session_start_date_time;
+                this._session_start_date_time = (DateTime.Now).Add(restored_offset);
+                this._session_current_date_time = this._session_start_date_time;
+                this.Total_Game_Time = restored_total_game_time;
+                this.Ts_Offset = default;
+                this.Session_End_DateTime = default;
             }
 
         internal void GameSecond()
             {
-                this.sessionCurrentDateTime.Add(TimeSpan.FromSeconds(1));
+                this._session_current_date_time.Add(TimeSpan.FromSeconds(1));
             }
         internal string GetGameTime()
             {
-                return $"{this.sessionCurrentDateTime.Hour:D2}:" +
-                       $"{this.sessionCurrentDateTime.Minute:D2}:" +
-                       $"{this.sessionCurrentDateTime.Second:D2}";
+                return $"{this._session_current_date_time.Hour:D2}:" +
+                       $"{this._session_current_date_time.Minute:D2}:" +
+                       $"{this._session_current_date_time.Second:D2}";
             }
     }

@@ -7,11 +7,11 @@ public class Save_State
 
         internal Gotchi_Pet Pet { get; set; }
 
-        internal Game_State GameState { get; set; }
+        internal Game_State Game_State { get; set; }
 
         public Save_State()
             {
                 this.Pet = new Gotchi_Pet();
-                this.GameState = new GameStartState();
+                this.Game_State = new Game_State_Start();
             }
     }

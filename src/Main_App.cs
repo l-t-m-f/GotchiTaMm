@@ -11,8 +11,9 @@ public delegate void VoidDelegate();
 internal class Main_App
     {
         private const string _APP_TITLE = "GotchiTaMm!!!";
-        internal const int WINDOW_W = 480;
-        internal const int WINDOW_H = 320;
+        internal const int WINDOW_W = 128;
+        internal const int WINDOW_H = 92;
+        internal const float SCREEN_RATIO = 3.0f;
         private static IntPtr Window;
         internal static IntPtr Renderer;
         
@@ -69,7 +70,8 @@ internal class Main_App
 
                 Window = SDL_CreateWindow(_APP_TITLE,
                     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                    WINDOW_W, WINDOW_H, WINDOW_FLAGS);
+                    (int)(WINDOW_W * SCREEN_RATIO), (int)(WINDOW_H * 
+                    SCREEN_RATIO), WINDOW_FLAGS);
 
                 if (Window == IntPtr.Zero)
                     {
@@ -116,8 +118,8 @@ internal class Main_App
                 SDL_RenderCopy(Renderer, Subsystem_Imaging.Instance
                     .Sprite_Atlas.Get_Atlas_Image("Background"), IntPtr.Zero, IntPtr.Zero);
                 
-                Game.Instance.scene.Draw();
-                Subsystem_UI.Instance.Draw();
+                //Game.Instance.scene.Draw();
+                //Subsystem_UI.Instance.Draw();
 
                 SDL_RenderPresent(Renderer);
             }
@@ -132,19 +134,19 @@ internal class Main_App
                                     QuitGame(0);
                                     break;
                                 case SDL_EventType.SDL_MOUSEMOTION:
-                                    Subsystem_Input.Instance.OnMouseMove(e.motion);
+                                    Subsystem_Input.Instance.On_Mouse_Move(e.motion);
                                     break;
                                 case SDL_EventType.SDL_MOUSEBUTTONDOWN:
-                                    Subsystem_Input.Instance.OnMouseDown(e.button);
+                                    Subsystem_Input.Instance.On_Mouse_Down(e.button);
                                     break;
                                 case SDL_EventType.SDL_MOUSEBUTTONUP:
-                                    Subsystem_Input.Instance.OnMouseUp(e.button);
+                                    Subsystem_Input.Instance.On_Mouse_Up(e.button);
                                     break;
                                 case SDL_EventType.SDL_KEYDOWN:
                                     Subsystem_Input.Instance.OnKeyDown(e.key.keysym);
                                     break;
                                 case SDL_EventType.SDL_KEYUP:
-                                    Subsystem_Input.Instance.OnKeyUp(e.key.keysym);
+                                    Subsystem_Input.Instance.On_Key_Up(e.key.keysym);
                                     break;
                                 default:
                                     // error...
@@ -156,12 +158,12 @@ internal class Main_App
 
         private static void Logic()
             {
-                if (Subsystem_Input.Instance.mouse.buttons[1] != 1)
+                if (Subsystem_Input.Instance.Mouse.Buttons[1] != 1)
                     {
                         return;
                     }
 
-                foreach(Button b in Subsystem_UI.Instance.buttonsDictio.Values)
+                foreach(Button b in Subsystem_Ui.Instance.Buttons_Dictionary.Values)
                     {
                         if (b.TestMouseOverlap() != true)
                             {
@@ -169,7 +171,7 @@ internal class Main_App
                             }
 
                         b.Activate();
-                        Subsystem_Input.Instance.mouse.buttons[1] = 0;
+                        Subsystem_Input.Instance.Mouse.Buttons[1] = 0;
                         break;
 
                     }
@@ -196,9 +198,9 @@ internal class Main_App
 
                         Console.WriteLine("A second has passed.");
 
-                        if (Game.Instance.clock is not null)
+                        if (Game.Instance.Clock is not null)
                             {
-                                Game.Instance.clock.GameSecond();
+                                Game.Instance.Clock.GameSecond();
                                 Console.WriteLine($"Clock incremented!");
                             }
                     }
@@ -209,7 +211,7 @@ internal class Main_App
                 while(true)
                     {
                         Thread.Sleep((1 / 60) * 100);
-                        Game.Instance.pet.Animate();
+                        Game.Instance.Pet.Animate();
                     }
             }
 

@@ -5,34 +5,34 @@ namespace GotchiTaMm;
 
 internal enum LifeStageType
     {
-        Egg = 0,
-        Baby,
-        Child,
-        Teenager,
-        Adult,
-        SpecialAdult,
-        Senior,
-        Death,
+        EGG = 0,
+        BABY,
+        CHILD,
+        TEENAGER,
+        ADULT,
+        SPECIAL_ADULT,
+        SENIOR,
+        DEATH,
     }
 
 internal enum GotchiFormType
     {
         [Description("Baby")]
-        Babytchi = 0,
+        BABYTCHI = 0,
         [Description("Child")]
-        Marutchi,
+        MARUTCHI,
         [Description("Teenager")]
-        Kuchitamatchi,
-        Tamatchi,
+        KUCHITAMATCHI,
+        TAMATCHI,
         [Description("Adult")]
-        Tarakotchi,
-        Nyorotchi,
-        Kuchipatchi,
-        Maskutchi,
-        Ginjirotchi,
-        Mametchi,
+        TARAKOTCHI,
+        NYOROTCHI,
+        KUCHIPATCHI,
+        MASKUTCHI,
+        GINJIROTCHI,
+        MAMETCHI,
         [Description("SpecialAdult")]
-        Bill,
+        BILL,
     }
 
 internal class Gotchi_Pet
@@ -49,34 +49,33 @@ internal class Gotchi_Pet
         internal byte DisciplineScore = 0;
 
         // Hunger mechanics
-        internal byte Weight = 1;
-        internal const byte WEIGHT_MAX = 100;
+        private byte Weight = 1;
+        private const byte WEIGHT_MAX = 100;
 
-        internal byte Hunger = 4;
-        internal const byte HUNGER_MAX = 4;
-        internal byte ConsecutiveSnacks = 0;
+        private byte Hunger = 4;
+        private const byte HUNGER_MAX = 4;
+        private byte ConsecutiveSnacks = 0;
         internal const float CONSECUTIVE_SNACK_REDUCE_TICK_TIMING = 3000.0f;
-        internal const byte CONSECUTIVE_SNACKS_MAX = 15;
-        internal const byte CONSECUTIVE_SNACKS_SICK_THRESHOLD = 4;
-        internal const byte CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD = 11;
-        internal bool IsSick = false;
-        internal bool IsNearDeath = false;
+        private const byte CONSECUTIVE_SNACKS_MAX = 15;
+        private const byte CONSECUTIVE_SNACKS_SICK_THRESHOLD = 4;
+        private const byte CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD = 11;
+        private bool IsSick = false;
+        private bool IsNearDeath = false;
 
         // Happiness mechanics
-        internal byte Happiness = 4;
-        const byte HAPPY_MAX = 4;
+        private byte Happiness = 4;
+        const byte _HAPPY_MAX = 4;
 
 
-
-        internal int EvolutionScore = 0;
-        internal LifeStageType LifeStage = LifeStageType.Egg;
+        public int EvolutionScore = 0;
+        internal LifeStageType LifeStage = LifeStageType.EGG;
 
         internal void Animate()
             {
 
             }
 
-        internal enum MealType
+        internal enum Meal_Type
             {
                 MEAL = 0,
                 SNACK = 1,
@@ -85,12 +84,12 @@ internal class Gotchi_Pet
         /*
          * Feeds the GotchiPet a meal or snack.
          */
-        internal void Feed(MealType meal)
+        internal void Feed(Meal_Type meal)
             {
                 switch (meal)
                     {
 
-                        case MealType.MEAL:
+                        case Meal_Type.MEAL:
                             {
                                 Console.WriteLine($"You fed the GotchiPet a good ol' bowl of rice!");
                                 if (this.Hunger < HUNGER_MAX)
@@ -104,9 +103,9 @@ internal class Gotchi_Pet
                                 break;
                             }
 
-                        case MealType.SNACK:
+                        case Meal_Type.SNACK:
                             {
-                                if (this.Happiness < HAPPY_MAX)
+                                if (this.Happiness < _HAPPY_MAX)
                                     {
                                         this.Happiness++;
                                     }
@@ -131,7 +130,7 @@ internal class Gotchi_Pet
                                 if (this.ConsecutiveSnacks >= CONSECUTIVE_SNACKS_MAX
                                     && this.IsSick && this.IsNearDeath)
                                     {
-                                        this.LifeStage = LifeStageType.Death;
+                                        this.LifeStage = LifeStageType.DEATH;
                                     }
                                 break;
                             }
@@ -142,12 +141,12 @@ internal class Gotchi_Pet
                     }
             }
 
-        internal void PlayWith()
+        internal void Play_With()
             {
 
             }
 
-        internal void GiveMeds()
+        internal void Give_Meds()
             {
 
             }
@@ -157,7 +156,7 @@ internal class Gotchi_Pet
 
             }
 
-        internal void GetStatus()
+        internal void Get_Status()
             {
 
             }

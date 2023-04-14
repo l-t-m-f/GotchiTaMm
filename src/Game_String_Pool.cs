@@ -5,21 +5,21 @@ internal static class Game_String_Pool
 
         internal class StringPoolEntry
             {
-                internal string Text;
-                internal FontNameType Font;
-                internal int SizeFactor;
+                internal readonly string Text;
+                internal readonly Font_Name_Type Font;
+                internal readonly int SizeFactor;
 
-                public StringPoolEntry(string text, FontNameType font, int sizeFactor)
+                public StringPoolEntry(string text, Font_Name_Type font, int size_factor)
                     {
                         this.Text = text;
                         this.Font = font;
-                        this.SizeFactor = sizeFactor;
+                        this.SizeFactor = size_factor;
                     }
             }
 
-        internal static List<StringPoolEntry> Data = new List<StringPoolEntry>()
+        internal static readonly List<StringPoolEntry> Data = new()
             {
-                new("Test", FontNameType.BlueScreen, 4),
-                new("Enter Time: ", FontNameType.RainyHearts, 5),
+                new StringPoolEntry("Test", Font_Name_Type.BLUE_SCREEN, 4),
+                new StringPoolEntry("Enter Time: ", Font_Name_Type.RAINY_HEARTS, 5),
             };
     }

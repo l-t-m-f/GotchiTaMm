@@ -4,27 +4,27 @@ internal abstract class Game_State
     {
     }
 
-internal class GameStartState : Game_State
+internal class Game_State_Start : Game_State
     {
 
     }
 
-internal class TimeSetPauseState : Game_State
+internal class Game_State_Time_Set : Game_State
     {
 
     }
 
-internal class GotchiPetViewState : Game_State
+internal class Game_State_Pet_View : Game_State
     {
 
     }
 
-internal class GotchiPetEvolveState : Game_State
+internal class Game_State_Pet_Evolve : Game_State
     {
 
     }
 
-internal class GotchiGameState : Game_State
+internal class Game_State_Play_Time : Game_State
     {
 
     }

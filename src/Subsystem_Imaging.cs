@@ -33,6 +33,8 @@ public class Subsystem_Imaging
             {
                 string[] file_names =
                     Directory.GetFiles(DIRECTORY_PATH, _SEARCH_PATTERN);
+                
+                // Prepare a mapping from SDL_Surface to Atlas_Entry
                 Dictionary<IntPtr, Atlas_Entry> surface_to_entry_mapping =
                     new Dictionary<IntPtr, Atlas_Entry>();
 

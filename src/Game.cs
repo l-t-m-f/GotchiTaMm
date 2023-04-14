@@ -4,25 +4,21 @@ namespace GotchiTaMm;
 
 internal class Game
     {
-        internal Game_State state { get; set; }
-        internal Game_Scene scene { get; set; }
-        internal Clock? clock { get; set; }
+        internal Game_State State { get; set; }
+        internal Game_Scene Scene { get; set; }
+        internal Clock? Clock { get; set; }
 
         //Singleton
-        internal static readonly Lazy<Game> lazyInstance = new Lazy<Game>(() => new Game());
+        internal static readonly Lazy<Game> Lazy_Instance = new(() => new Game());
         private Game()
             {
-                this.pet = new Gotchi_Pet();
-                this.state = new GameStartState();
-                this.scene = new Game_Scene();
+                this.Pet = new Gotchi_Pet();
+                this.State = new Game_State_Start();
+                this.Scene = new Game_Scene();
             }
 
-        public static Game Instance {
-                get {
-                        return lazyInstance.Value;
-                    }
-            }
-                
+        public static Game Instance => Lazy_Instance.Value;
+
         //private Game(SaveState save)
         //{
         //    Pet = save.Pet;
@@ -30,9 +26,9 @@ internal class Game
         //}
 
 
-        internal Gotchi_Pet pet { get; set; }
+        internal Gotchi_Pet Pet { get; set; }
 
-        internal void CompareAgeSinceLastShutdown()
+        internal void Compare_Age_Since_Last_Shutdown()
             {
 
             }

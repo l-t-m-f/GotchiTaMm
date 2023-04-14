@@ -8,7 +8,7 @@ internal class Button
 
         internal SDL_Rect Rectangle;
         internal SDL_Color[] Color = new SDL_Color[2];
-        internal ButtonStateType ButtonState;
+        internal Button_State_Type Button_State;
 
         // EVENTS FOR BUTTONS
         public event VoidDelegate? ButtonEvent;
@@ -17,7 +17,7 @@ internal class Button
             {
                 this.Rectangle = rectangle;
                 this.Color = color;
-                this.ButtonState = ButtonStateType.Unselected;
+                this.Button_State = Button_State_Type.UNSELECTED;
                 this.ButtonEvent = button_event;
             }
 
@@ -25,14 +25,10 @@ internal class Button
             {
                 if (this.TestMouseOverlap() == true)
                     {
-                        if (Subsystem_Input.Instance.mouse.buttons[1] == 1)
-                            {
-                                SDL_SetRenderDrawColor(Renderer, 255, 0, this.Color[0].b, this.Color[0].a);
-                            }
-                        else
-                            {
-                                SDL_SetRenderDrawColor(Renderer, 255, 255, this.Color[0].b, this.Color[0].a);
-                            }
+                        SDL_SetRenderDrawColor(Renderer, 255,
+                            Subsystem_Input.Instance.Mouse.Buttons[1] == 1
+                                ? (byte)0
+                                : (byte)255, this.Color[0].b, this.Color[0].a);
                     }
                 else
                     {
@@ -48,14 +44,10 @@ internal class Button
 
         public bool TestMouseOverlap()
             {
-                if (Subsystem_Input.Instance.mouse.position.x > this.Rectangle.x
-                    && Subsystem_Input.Instance.mouse.position.x < this.Rectangle.x + this.Rectangle.w
-                    && Subsystem_Input.Instance.mouse.position.y > this.Rectangle.y
-                    && Subsystem_Input.Instance.mouse.position.y < this.Rectangle.y + this.Rectangle.h)
-                    {
-                        return true;
-                    }
-                return false;
+                return Subsystem_Input.Instance.Mouse.Position.x > this.Rectangle.x
+                       && Subsystem_Input.Instance.Mouse.Position.x < this.Rectangle.x + this.Rectangle.w
+                       && Subsystem_Input.Instance.Mouse.Position.y > this.Rectangle.y
+                       && Subsystem_Input.Instance.Mouse.Position.y < this.Rectangle.y + this.Rectangle.h;
             }
 
         internal void Activate()

@@ -3,49 +3,45 @@ using static SDL2.SDL;
 
 namespace GotchiTaMm;
 
+internal class Mouse
+    {
+        internal SDL_Point Position = new SDL_Point();
+        internal readonly int[] Buttons = new int[4];
+    }
+
+internal class Keyboard
+    {
+        internal readonly int[] State = new int[255];
+    }
 internal class Subsystem_Input
     {
         // Inner classes
 
-        internal class Mouse
-            {
-                internal SDL_Point position = new SDL_Point();
-                internal int[] buttons = new int[4];
-            }
-
-        internal class Keyboard
-            {
-                internal int[] state = new int[255];
-            }
 
         //
 
-        internal Mouse mouse;
-        internal Keyboard keyboard;
-        internal string appIn = "";
-        internal int appInLimit = 5;
+        internal readonly Mouse Mouse;
+        internal readonly Keyboard Keyboard;
+        internal string App_In = "";
+        private const int _APP_IN_LIMIT = 5;
 
         //Singleton
 
-        internal static readonly Lazy<Subsystem_Input> lazyInstance = new Lazy<Subsystem_Input>(() => new Subsystem_Input());
+        private static readonly Lazy<Subsystem_Input> _Lazy_Instance = new(() => new Subsystem_Input());
         private Subsystem_Input()
             {
-                this.mouse = new Mouse();
-                this.keyboard = new Keyboard();
+                this.Mouse = new Mouse();
+                this.Keyboard = new Keyboard();
             }
 
-        public static Subsystem_Input Instance {
-                get {
-                        return lazyInstance.Value;
-                    }
-            }
+        public static Subsystem_Input Instance => _Lazy_Instance.Value;
 
         //
         
         public void OnKeyDown(SDL_Keysym keysym)
             {
                 Console.WriteLine($"Key down: {keysym.scancode}");
-                this.keyboard.state[(int)keysym.scancode] = 1;
+                this.Keyboard.State[(int)keysym.scancode] = 1;
 
                 if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
                     {
@@ -53,179 +49,188 @@ internal class Subsystem_Input
                     }
                 else
                     {
-                        if (Game.Instance.state is GameStartState)
+                        switch (Game.Instance.State)
                             {
-
-                                if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_BACKSPACE)
+                                case Game_State_Start:
                                     {
-                                        this.TrimAppIn(true, TextVarNameType.TimeStart, true);
-                                    }
+                                        if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_BACKSPACE)
+                                            {
+                                                this.Trim_App_In(true, Text_Var_Name_Type.TIME_START, true);
+                                            }
 
-                                if (char.IsAsciiDigit((char)keysym.sym))
-                                    {
-                                        this.PushIntoAppIn(keysym, true, TextVarNameType.TimeStart, true);
-                                    }
+                                        if (char.IsAsciiDigit((char)keysym.sym))
+                                            {
+                                                this.Push_Into_App_In(keysym, true, Text_Var_Name_Type.TIME_START, true);
+                                            }
 
-                                Console.WriteLine(this.appIn);
-                            }
-                        else if (Game.Instance.state is TimeSetPauseState)
-                            {
-                            }
-                        else if (Game.Instance.state is GotchiPetViewState)
-                            {
-                            }
-                        else if (Game.Instance.state is GotchiPetEvolveState)
-                            {
-                            }
-                        else if (Game.Instance.state is GotchiGameState)
-                            {
+                                        Console.WriteLine(this.App_In);
+                                        break;
+                                    }
+                                case Game_State_Time_Set:
+                                    break;
+                                case Game_State_Pet_View:
+                                    break;
+                                case Game_State_Pet_Evolve:
+                                    break;
+                                case Game_State_Play_Time:
+                                    break;
                             }
                     }
 
             }
 
-        public void OnKeyUp(SDL_Keysym keysym)
+        public void On_Key_Up(SDL_Keysym keysym)
             {
                 //Console.WriteLine($"Key up: {keysym.scancode}");
-                this.keyboard.state[(int)keysym.scancode] = 0;
+                this.Keyboard.State[(int)keysym.scancode] = 0;
             }
 
-        public void OnMouseDown(SDL_MouseButtonEvent mouseButtonEvent)
+        public void On_Mouse_Down(SDL_MouseButtonEvent mouse_button_event)
             {
-                Console.WriteLine($"Mouse click: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
-                if (mouseButtonEvent.button <= 3)
+                Console.WriteLine($"Mouse click: {mouse_button_event.button} at {mouse_button_event.x}, {mouse_button_event.y}");
+                if (mouse_button_event.button <= 3)
                     {
-                        Instance.mouse.buttons[mouseButtonEvent.button] = 1;
+                        Instance.Mouse.Buttons[mouse_button_event.button] = 1;
                     }
 
             }
 
-        public void OnMouseUp(SDL_MouseButtonEvent mouseButtonEvent)
+        public void On_Mouse_Up(SDL_MouseButtonEvent mouse_button_event)
             {
                 //Console.WriteLine($"Mouse released: {mouseButtonEvent.button} at {mouseButtonEvent.x}, {mouseButtonEvent.y}");
-                if (mouseButtonEvent.button <= 3)
+                if (mouse_button_event.button <= 3)
                     {
-                        Instance.mouse.buttons[mouseButtonEvent.button] = 0;
+                        Instance.Mouse.Buttons[mouse_button_event.button] = 0;
                     }
             }
-        public void OnMouseMove(SDL_MouseMotionEvent mouseMotionEvent)
+        public void On_Mouse_Move(SDL_MouseMotionEvent mouse_motion_event)
             {
                 //Console.WriteLine($"Mouse moving at {mouseMotionEvent.x}, {mouseMotionEvent.y}");
-                Instance.mouse.position.x = mouseMotionEvent.x;
-                Instance.mouse.position.y = mouseMotionEvent.y;
+                Instance.Mouse.Position.x = mouse_motion_event.x;
+                Instance.Mouse.Position.y = mouse_motion_event.y;
             }
 
-        internal void TrimAppIn(bool render = false, TextVarNameType renderTarget = 0, bool isTime = false)
+        private void Trim_App_In(bool render = false, Text_Var_Name_Type render_target = 0, bool is_time = false)
             {
-                if (this.appIn.Length == 0) return;
-
-                if (isTime)
+                if (this.App_In.Length == 0)
                     {
-                        if (Instance.appIn.Length == 4)
+                        return;
+                    }
+
+                if (is_time)
+                    {
+                        if (Instance.App_In.Length == 4)
                             {
-                                this.appIn = this.appIn.DropLastChar();
+                                this.App_In = this.App_In.Drop_Last_Char();
                             }
                     }
 
-                this.appIn = this.appIn.DropLastChar();
+                this.App_In = this.App_In.Drop_Last_Char();
 
-                if (!render) return;
+                if (!render)
+                    {
+                        return;
+                    }
 
-                Subsystem_UI.Instance.SetOrUpdateTextVar(renderTarget, this.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                Subsystem_Ui.Instance.Set_Or_Update_Text_Var(render_target, this.App_In, Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
             }
 
-        internal void PushIntoAppIn(SDL_Keysym keysym, bool render = false, TextVarNameType renderTarget = 0, bool isTime = false)
+        private void Push_Into_App_In(SDL_Keysym keysym, bool render = false, Text_Var_Name_Type render_target = 0, bool is_time = false)
             {
-                if (this.appIn.Length >= this.appInLimit) return;
-
-                if (isTime)
+                if (this.App_In.Length >= _APP_IN_LIMIT)
                     {
-                        if (Instance.appIn.Length == 2)
+                        return;
+                    }
+
+                if (is_time)
+                    {
+                        if (Instance.App_In.Length == 2)
                             {
-                                Instance.appIn += ':';
+                                Instance.App_In += ':';
                             }
                     }
 
-                this.appIn += (char)keysym.sym;
+                this.App_In += (char)keysym.sym;
 
-                if (!render) return;
+                if (!render)
+                    {
+                        return;
+                    }
 
-                Subsystem_UI.Instance.SetOrUpdateTextVar(renderTarget, this.appIn, FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                Subsystem_Ui.Instance.Set_Or_Update_Text_Var(render_target, this.App_In, Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
 
             }
 
 
-        public void SelectButtonPressed()
+        public void Select_Button_Pressed()
             {
                 Console.WriteLine("Select!");
 
-                if (Game.lazyInstance is null) return;
-
-                if (Game.Instance.state is GameStartState)
+                switch (Game.Instance.State)
                     {
-                        Subsystem_UI.Instance.TryInputTime();
+                        case Game_State_Start:
+                            Subsystem_Ui.Instance.Try_Input_Time();
+                            break;
+                        case Game_State_Pet_View:
+                            Subsystem_Ui.Instance.PictoSelection.Select_Next();
+                            break;
                     }
-                else if (Game.Instance.state is GotchiPetViewState)
-                    {
-                        Subsystem_UI.Instance.pictoSelection.SelectNext();
-                    }
-
             }
-        public void ExecuteButtonPressed()
+        public void Execute_Button_Pressed()
             {
                 Console.WriteLine(value: "Execute!");
 
-                int currentPicto = 
-                    Subsystem_UI.Instance.pictoSelection.cursorIndex;
+                int current_picto = 
+                    Subsystem_Ui.Instance.PictoSelection.Cursor_Index;
 
-                switch (currentPicto)
+                switch (current_picto)
                     {                
 
                         case 1:
                             // BATHROOM
-                            Game.Instance.pet.Clean();
+                            Game.Instance.Pet.Clean();
                             break;
 
                         case 2:
                             // FEED
-                            Game.Instance.pet.Feed(Gotchi_Pet.MealType.MEAL);
+                            Game.Instance.Pet.Feed(Gotchi_Pet.Meal_Type.MEAL);
                             break;
 
                         case 3:
                             // GAME (PLAY)
-                            Game.Instance.pet.PlayWith();
+                            Game.Instance.Pet.Play_With();
                             break;
 
                         case 4:
                             // LIGHTS
-                            Game.Instance.scene.Toggle_Light();
+                            Game.Instance.Scene.Toggle_Light();
                             break;
 
                         case 5:
                             // MEDICINE
-                            Game.Instance.pet.GiveMeds();
+                            Game.Instance.Pet.Give_Meds();
                             break;
 
                         case 6:
                             // STATUS
-                            Subsystem_UI.Instance.Meter(Game.Instance.pet);
+                            Subsystem_Ui.Instance.Meter(Game.Instance.Pet);
                             break;
 
                         case 7:
                             // DISCIPLINE
-                            Game.Instance.pet.Discipline();
+                            Game.Instance.Pet.Discipline();
                             break;
 
                         default:
                             break;
                     }
             }
-        public void CancelButtonPressed()
+        public void Cancel_Button_Pressed()
             {
                 Console.WriteLine("Cancel!");
-                if (Game.Instance.state is GotchiPetViewState)
+                if (Game.Instance.State is Game_State_Pet_View)
                     {
-                        Subsystem_UI.Instance.pictoSelection.ClearSelect();
+                        Subsystem_Ui.Instance.PictoSelection.Clear_Select();
                     }
             }
     }

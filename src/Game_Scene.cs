@@ -11,15 +11,15 @@ internal class Game_Scene
 
         internal void Draw()
             {
-                switch (Game.Instance.state)
+                switch (Game.Instance.State)
                     {
-                        case GameStartState:
+                        case Game_State_Start:
                             {
-                                Blit(Renderer, Subsystem_UI.Instance.textImagesDictio.GetValueOrDefault(1), 260, 120);
+                                Blit(Renderer, Subsystem_Ui.Instance.Text_Images_Dictionary.GetValueOrDefault(1), 260, 120);
 
-                                if (Subsystem_UI.Instance.textVarsDictio.Count > 0)
+                                if (Subsystem_Ui.Instance.Text_Vars_Dictionary.Count > 0)
                                     {
-                                        Blit(Renderer, Subsystem_UI.Instance.textVarsDictio.GetValueOrDefault(TextVarNameType.TimeStart), 275, 144);
+                                        Blit(Renderer, Subsystem_Ui.Instance.Text_Vars_Dictionary.GetValueOrDefault(Text_Var_Name_Type.TIME_START), 275, 144);
                                     }
 
                                 SDL_Rect circle = new SDL_Rect {
@@ -29,20 +29,20 @@ internal class Game_Scene
                                         h = 70,
                                     };
                                 SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255);
-                                FillEllipsoid(Renderer, circle);
+                                Fill_Ellipsoid(Renderer, circle);
                                 break;
                             }
-                        case TimeSetPauseState:
+                        case Game_State_Time_Set:
                             break;
-                        case GotchiPetViewState:
+                        case Game_State_Pet_View:
                             {
                                 // Render the clock text to the screen?
-                                if (Game.Instance.clock is not null)
+                                if (Game.Instance.Clock is not null)
                                     {
 
-                                        Subsystem_UI.Instance.SetOrUpdateTextVar(TextVarNameType.ClockTime, Game.Instance.clock.GetGameTime(), FontNameType.RainyHearts, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
+                                        Subsystem_Ui.Instance.Set_Or_Update_Text_Var(Text_Var_Name_Type.CLOCK_TIME, Game.Instance.Clock.GetGameTime(), Font_Name_Type.RAINY_HEARTS, 6, new SDL_Color { r = 55, g = 125, b = 125, a = 255 });
 
-                                        Blit(Renderer, Subsystem_UI.Instance.textVarsDictio.GetValueOrDefault(TextVarNameType.ClockTime), 15, 110);
+                                        Blit(Renderer, Subsystem_Ui.Instance.Text_Vars_Dictionary.GetValueOrDefault(Text_Var_Name_Type.CLOCK_TIME), 15, 110);
                                     }
                                 SDL_Rect circle = new SDL_Rect {
                                         x = 195,
@@ -52,12 +52,12 @@ internal class Game_Scene
                                     };
 
                                 SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255);
-                                FillEllipsoid(Renderer, circle);
+                                Fill_Ellipsoid(Renderer, circle);
                                 break;
                             }
-                        case GotchiPetEvolveState:
+                        case Game_State_Pet_Evolve:
                             break;
-                        case GotchiGameState:
+                        case Game_State_Play_Time:
                             break;
                     }
             }

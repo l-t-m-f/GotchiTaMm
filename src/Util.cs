@@ -57,7 +57,7 @@ public static class Util
                         SDL_RenderDrawLine(renderer, circle.x + x, circle.y + y, circle.x + x1, circle.y + y1);//quadrant BR
                     }
             }
-        public static void FillEllipsoid(IntPtr renderer, SDL_Rect circle)
+        public static void Fill_Ellipsoid(IntPtr renderer, SDL_Rect circle)
             {
                 const double HALF_PI = Math.PI / 2;
                 const int PRECISION = 300; // precision value; value of 1 will draw a diamond, 27 makes pretty smooth circles.
