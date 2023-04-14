@@ -34,7 +34,7 @@ internal class Subsystem_Serialization
                         if (this.SavedGame == null)
                             {
                                 Console.WriteLine("Error! Attempting to save, but SaveState is corrupt.");
-                                QuitGame(-1);
+                                Quit_Game(-1);
                                 return;
                             }
 

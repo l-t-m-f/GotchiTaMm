@@ -17,27 +17,21 @@ internal enum LifeStageType
 
 internal enum GotchiFormType
     {
-        [Description("Baby")]
-        BABYTCHI = 0,
-        [Description("Child")]
-        MARUTCHI,
-        [Description("Teenager")]
-        KUCHITAMATCHI,
+        [Description("Baby")] BABYTCHI = 0,
+        [Description("Child")] MARUTCHI,
+        [Description("Teenager")] KUCHITAMATCHI,
         TAMATCHI,
-        [Description("Adult")]
-        TARAKOTCHI,
+        [Description("Adult")] TARAKOTCHI,
         NYOROTCHI,
         KUCHIPATCHI,
         MASKUTCHI,
         GINJIROTCHI,
         MAMETCHI,
-        [Description("SpecialAdult")]
-        BILL,
+        [Description("SpecialAdult")] BILL,
     }
 
 internal class Gotchi_Pet
     {
-
         internal bool IsSleepy = false;
         internal bool NeedsAttention = false;
         internal bool IsMisbehaving = false;
@@ -72,7 +66,6 @@ internal class Gotchi_Pet
 
         internal void Animate()
             {
-
             }
 
         internal enum Meal_Type
@@ -88,18 +81,20 @@ internal class Gotchi_Pet
             {
                 switch (meal)
                     {
-
                         case Meal_Type.MEAL:
                             {
-                                Console.WriteLine($"You fed the GotchiPet a good ol' bowl of rice!");
+                                Console.WriteLine(
+                                    $"You fed the GotchiPet a good ol' bowl of rice!");
                                 if (this.Hunger < HUNGER_MAX)
                                     {
                                         this.Hunger = HUNGER_MAX;
                                     }
+
                                 if (this.Weight < WEIGHT_MAX)
                                     {
                                         this.Weight++;
                                     }
+
                                 break;
                             }
 
@@ -109,6 +104,7 @@ internal class Gotchi_Pet
                                     {
                                         this.Happiness++;
                                     }
+
                                 if (this.Weight < WEIGHT_MAX)
                                     {
                                         this.Weight += 2;
@@ -121,49 +117,46 @@ internal class Gotchi_Pet
                                     {
                                         this.IsSick = true;
                                     }
+
                                 if (this.ConsecutiveSnacks >=
                                     CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD
                                     && !this.IsNearDeath)
                                     {
                                         this.IsNearDeath = true;
                                     }
-                                if (this.ConsecutiveSnacks >= CONSECUTIVE_SNACKS_MAX
+
+                                if (this.ConsecutiveSnacks >=
+                                    CONSECUTIVE_SNACKS_MAX
                                     && this.IsSick && this.IsNearDeath)
                                     {
                                         this.LifeStage = LifeStageType.DEATH;
                                     }
+
                                 break;
                             }
 
                         default:
                             break;
-
                     }
             }
 
         internal void Play_With()
             {
-
             }
 
         internal void Give_Meds()
             {
-
             }
 
         internal void Clean()
             {
-
             }
 
         internal void Get_Status()
             {
-
             }
 
         internal void Discipline()
             {
-
             }
-
     }

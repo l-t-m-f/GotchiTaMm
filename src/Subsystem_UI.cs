@@ -102,38 +102,24 @@ internal class Subsystem_UI
 
         private void Init_Fonts_Subroutine()
             {
-                int font_count = Enum.GetValues(typeof(Font_Name_Type)).Length;
-                for (int i = 0; i < font_count; i++)
+                foreach (Font_Name_Type fontNameType in Enum.GetValues(typeof(Font_Name_Type)))
                     {
-                        this.Fonts_Dictionary?.Add((Font_Name_Type)i,
-                            new IntPtr[_MAX_FONT_SIZE_FACTOR]);
+                        IntPtr[] fontArray = new IntPtr[_MAX_FONT_SIZE_FACTOR];
+                        this.Fonts_Dictionary.Add(fontNameType, fontArray);
 
-                        for (int j = 0;
-                             j < this.Fonts_Dictionary
-                                 ?.GetValueOrDefault((Font_Name_Type)i)
-                                 ?.GetLength(0);
-                             j++)
+                        for (int j = 0; j < fontArray.Length; j++)
                             {
-                                IntPtr last_font =
-                                    TTF_OpenFont(
-                                        $"fonts/{((Font_Name_Type)i).To_Friendly_String()}.ttf",
-                                        (int)Math.Pow(2, j));
+                                IntPtr last_font = TTF_OpenFont($"fonts/{fontNameType.To_Friendly_String()}.ttf", (int)Math.Pow(2, j));
                                 if (last_font == IntPtr.Zero)
                                     {
-                                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
-                                            $"There was a problem loading the font!\n {SDL_GetError()}");
+                                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, $"There was a problem loading the font!\n {SDL_GetError()}");
                                     }
 
-                                IntPtr[]? fonts_array =
-                                    this.Fonts_Dictionary.GetValueOrDefault(
-                                        (Font_Name_Type)i);
-                                if (fonts_array != null)
-                                    {
-                                        fonts_array[j] = last_font;
-                                    }
+                                fontArray[j] = last_font;
                             }
                     }
             }
+
 
         private void Init_Text_Images_Subroutine()
             {
@@ -179,12 +165,17 @@ internal class Subsystem_UI
                         b.Draw();
                     }
 
-                if (this.Can_Draw_Pictos == false) return;
-                
-                if (this.Picto_Selection.Cursor_Index < 0) return;
+                if (this.Can_Draw_Pictos == false)
+                    {
+                        return;
+                    }
 
-                BlitRect(Renderer, this.Picto_Selection.Image,
-                    this.Picto_Selection.Selection_Pos_And_Size);
+                if (this.Picto_Selection.Cursor_Index < 0)
+                    {
+                    }
+
+                // BlitRect(Renderer, this.Picto_Selection.Image,
+                //     this.Picto_Selection.Selection_Pos_And_Size);
             }
 
         internal void Update_Text_Var(

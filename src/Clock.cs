@@ -13,7 +13,9 @@ internal class Clock
         // The total duration of the game. This time is reset when the
         // GotchiPet dies
         internal TimeSpan Total_Game_Time;
-        internal TimeSpan Ellapsed_Session_Time; // time between session start and current DateTime;
+
+        internal TimeSpan
+            Ellapsed_Session_Time; // time between session start and current DateTime;
 
         // The Date and Time at the start of the session
         // Based on a Now DateTime, but the player can configure a local offset
@@ -55,10 +57,12 @@ internal class Clock
                 //elapsedTime = new TimeSpan(0, 0, 0);
             }
 
-        internal Clock(TimeSpan restored_offset, TimeSpan restored_total_game_time)
+        internal Clock(TimeSpan restored_offset,
+            TimeSpan restored_total_game_time)
             {
                 DateTime session_start_date_time;
-                this._session_start_date_time = (DateTime.Now).Add(restored_offset);
+                this._session_start_date_time =
+                    (DateTime.Now).Add(restored_offset);
                 this._session_current_date_time = this._session_start_date_time;
                 this.Total_Game_Time = restored_total_game_time;
                 this.Ts_Offset = default;
@@ -69,6 +73,7 @@ internal class Clock
             {
                 this._session_current_date_time.Add(TimeSpan.FromSeconds(1));
             }
+
         internal string Get_Game_Time()
             {
                 return $"{this._session_current_date_time.Hour:D2}:" +

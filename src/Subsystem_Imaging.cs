@@ -16,6 +16,7 @@ public class Subsystem_Imaging
         internal const string DIRECTORY_PATH = "images";
         private const string _SEARCH_PATTERN = "*.png";
         internal Sprite_Atlas Sprite_Atlas { get; set; }
+        internal Font_Atlas Font_Atlas { get; set; }
 
         //Lazy Singleton implementation
         private static readonly Lazy<Subsystem_Imaging> _Lazy_Instance =
@@ -24,6 +25,7 @@ public class Subsystem_Imaging
         private Subsystem_Imaging()
             {
                 this.Sprite_Atlas = new Sprite_Atlas();
+                this.Font_Atlas = new Font_Atlas();
             }
 
         public static Subsystem_Imaging Instance => _Lazy_Instance.Value;
@@ -35,7 +37,7 @@ public class Subsystem_Imaging
             {
                 string[] file_names =
                     Directory.GetFiles(DIRECTORY_PATH, _SEARCH_PATTERN);
-                
+
                 // Prepare a mapping from SDL_Surface to Atlas_Entry
                 Dictionary<IntPtr, Atlas_Entry> surface_to_entry_mapping =
                     new Dictionary<IntPtr, Atlas_Entry>();
@@ -55,12 +57,17 @@ public class Subsystem_Imaging
 
                 Array.Resize(ref this.Sprite_Atlas.Surface_Data,
                     this.Sprite_Atlas.Entries.Count);
-                Array.Sort(this.Sprite_Atlas.Surface_Data, this.Sprite_Atlas);
+                Array.Sort(this.Sprite_Atlas.Surface_Data,
+                    this.Sprite_Atlas);
 
                 // Sort the Entries list based on the sorted Surface_Data array
-                this.Sprite_Atlas.Entries = this.Sprite_Atlas.Surface_Data.Select(surface => surface_to_entry_mapping[surface]).ToList();
+                this.Sprite_Atlas.Entries = this.Sprite_Atlas.Surface_Data
+                    .Select(surface => surface_to_entry_mapping[surface])
+                    .ToList();
 
-                for (var i = 0; i < this.Sprite_Atlas.Surface_Data.Length; i++)
+                for (var i = 0;
+                     i < this.Sprite_Atlas.Surface_Data.Length;
+                     i++)
                     {
                         SDL_QueryTexture(
                             SDL_CreateTextureFromSurface(Renderer,
@@ -109,9 +116,11 @@ public class Subsystem_Imaging
                                 if (rotated == false)
                                     {
                                         SDL_BlitSurface(
-                                            this.Sprite_Atlas.Surface_Data[i],
+                                            this.Sprite_Atlas.Surface_Data[
+                                                i],
                                             IntPtr.Zero,
-                                            this.Sprite_Atlas.Master_Surface,
+                                            this.Sprite_Atlas
+                                                .Master_Surface,
                                             ref dest);
                                     }
                                 else
@@ -160,7 +169,8 @@ public class Subsystem_Imaging
                     {
                         for (var x = 0; x < source_surface.w; x++)
                             {
-                                uint pixel = Get_Pixel(source_surface_ptr, x,
+                                uint pixel = Get_Pixel(source_surface_ptr,
+                                    x,
                                     y);
 
 #if DEBUG
@@ -171,7 +181,8 @@ public class Subsystem_Imaging
                                     $"Source Pixel ({x}, {y}): R: {r} G: {g} B: {b} A: {a}");
 #endif
                                 int dest_x = source_surface.h - y - 1;
-                                Set_Pixel(dest_surface_ptr, dest_x, x, pixel);
+                                Set_Pixel(dest_surface_ptr, dest_x, x,
+                                    pixel);
 
 #if DEBUG
                                 (byte dest_r, byte dest_g, byte dest_b,
@@ -212,8 +223,9 @@ public class Subsystem_Imaging
                 Marshal.WriteInt32(pixel, (int)new_pixel);
             }
 
-        private static (byte r, byte g, byte b, byte a) Get_Pixel_Color_Values(
-            IntPtr surface_ptr, int x, int y)
+        private static (byte r, byte g, byte b, byte a)
+            Get_Pixel_Color_Values(
+                IntPtr surface_ptr, int x, int y)
             {
                 uint pixel = Get_Pixel(surface_ptr, x, y);
                 var r = (byte)(pixel & 0xFF);
@@ -222,34 +234,49 @@ public class Subsystem_Imaging
                 var a = (byte)((pixel >> 24) & 0xFF);
                 return (r, g, b, a);
             }
-        
-        
+
+        /// <summary>
+        /// A function to create a texture pointer from a string of text.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="font_name"></param>
+        /// <param name="font_size"></param>
+        /// <param name="color"></param>
+        /// <returns></returns>
         internal IntPtr Create_Text_Texture_Pointer(string text,
-            Font_Name_Type font_name, int font_size_factor = 4,
+            Font_Name_Type font_name, int font_size = 4,
             SDL_Color color = new())
             {
-                IntPtr font_to_use =
+                IntPtr font_resource =
                     Subsystem_UI.Instance.Fonts_Dictionary.GetValueOrDefault
-                    (font_name)![
-                        font_size_factor];
+                        (font_name)![
+                        font_size];
 
-                IntPtr rendered_text_surface =
-                    TTF_RenderUTF8_Blended(font_to_use, text, color);
-                if (rendered_text_surface == IntPtr.Zero)
+                IntPtr surface_ptr =
+                    TTF_RenderUTF8_Blended(font_resource, text, color);
+
+                if (surface_ptr == IntPtr.Zero)
                     {
-                        Console.WriteLine(
-                            "There was a problem creating textvar pointer");
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                            "There was a problem making a surface pointer for the text" +
+                            $"'{text}' at size {font_size}");
                     }
 
-                IntPtr text_texture =
-                    SDL_CreateTextureFromSurface(Renderer,
-                        rendered_text_surface);
-                if (text_texture == IntPtr.Zero)
+                IntPtr texture_ptr =
+                    SDL_CreateTextureFromSurface(Renderer, surface_ptr);
+                if (texture_ptr == IntPtr.Zero)
                     {
-                        Console.WriteLine(
-                            "There was a problem creating text image pointer");
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                            "There was a problem creating a texture from the " +
+                            "surface pointer for the text" +
+                            $"'{text}' at size {font_size}");
                     }
 
-                return text_texture;
+#if DEBUG
+                Console.WriteLine($"Texture pointer for text '{text}' " +
+                    $"created successfully!");
+#endif
+
+                return texture_ptr;
             }
     }

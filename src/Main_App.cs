@@ -28,8 +28,8 @@ internal class Main_App
 
                 Setup();
 
-                Clock = new Thread(() => ClockThread());
-                Animate = new Thread(() => AnimateThread());
+                Clock = new Thread(Clock_Thread);
+                Animate = new Thread(Animate_Thread);
 
                 Task<Save_State> load_data = Subsystem_Serialization.Instance.Load_Game();
                 Subsystem_Serialization.Instance.SavedGame = load_data.Result;
@@ -50,7 +50,7 @@ internal class Main_App
                         Logic();
                     }
 
-                QuitGame(0);
+                Quit_Game(0);
             }
 
         private static void Setup()
@@ -101,6 +101,8 @@ internal class Main_App
                 
                 Subsystem_UI.Instance.Init();
                 Subsystem_Imaging.Instance.Make_Atlas();
+                Subsystem_Imaging.Instance.Font_Atlas.Make_Sheet_For
+                (Font_Name_Type.RAINY_HEARTS, 4);
 
             }
         
@@ -119,6 +121,10 @@ internal class Main_App
                 Game.Instance.Scene.Draw();
                 Subsystem_UI.Instance.Draw();
 
+                
+                Subsystem_Imaging.Instance.Font_Atlas.Draw_With_Sheet(
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 100, 100, new SDL_Color { r = 255, 
+                        g = 0, b = 0 }, Font_Name_Type.RAINY_HEARTS,10);
                 SDL_RenderPresent(Renderer);
             }
         
@@ -129,7 +135,7 @@ internal class Main_App
                         switch (e.type)
                             {
                                 case SDL_EventType.SDL_QUIT:
-                                    QuitGame(0);
+                                    Quit_Game(0);
                                     break;
                                 case SDL_EventType.SDL_MOUSEMOTION:
                                     Subsystem_Input.Instance.On_Mouse_Move(e.motion);
@@ -161,21 +167,15 @@ internal class Main_App
                         return;
                     }
 
-                foreach(Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values)
+                foreach (Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values.Where(b => b.TestMouseOverlap()))
                     {
-                        if (b.TestMouseOverlap() != true)
-                            {
-                                continue;
-                            }
-
                         b.Activate();
                         Subsystem_Input.Instance.Mouse.Buttons[1] = 0;
                         break;
-
                     }
             }
 
-        internal static void QuitGame(sbyte program_code)
+        internal static void Quit_Game(sbyte program_code)
             {
                 // Release unsafe pointer
                 //Marshal.FreeHGlobal(rectangle_ptr);
@@ -188,7 +188,7 @@ internal class Main_App
                 Environment.Exit(program_code);
             }
 
-        private static void ClockThread()
+        private static void Clock_Thread()
             {
                 while (true)
                     {
@@ -204,7 +204,7 @@ internal class Main_App
                     }
             }
 
-        private static void AnimateThread()
+        private static void Animate_Thread()
             {
                 while(true)
                     {

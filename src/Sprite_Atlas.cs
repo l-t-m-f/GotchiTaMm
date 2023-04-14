@@ -100,7 +100,8 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                 if (extracted_surface == IntPtr.Zero)
                     {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                            $"There was an issue creating the extracted surface:\n{SDL_GetError()}");
+                            $"There was an issue creating the extracted surface:" +
+                            $"\n{SDL_GetError()}");
                         return IntPtr.Zero;
                     }
 
@@ -110,7 +111,8 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                         extracted_surface, IntPtr.Zero) != 0)
                     {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                            $"There was an issue extracting the image:\n{SDL_GetError()}");
+                            $"There was an issue extracting the image:" +
+                            $"\n{SDL_GetError()}");
                         SDL_FreeSurface(extracted_surface);
                         return IntPtr.Zero;
                     }
@@ -128,7 +130,9 @@ internal class Sprite_Atlas : IComparer<IntPtr>
             {
                 var full_filename =
                     $"{Subsystem_Imaging.DIRECTORY_PATH}\\{short_filename}.png";
-                Atlas_Entry? entry = this.Entries.FirstOrDefault(t => t.Filename == full_filename);
+                Atlas_Entry? entry =
+                    this.Entries.FirstOrDefault(
+                        t => t.Filename == full_filename);
                 return entry?.Rectangle ?? default;
             }
 
@@ -158,9 +162,9 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                             }
 
                         Atlas_Node? node = find_node(parent_node.Children[0],
-                                              required_w, required_h) ??
-                                          find_node(parent_node.Children[1],
-                                              required_w, required_h);
+                                               required_w, required_h) ??
+                                           find_node(parent_node.Children[1],
+                                               required_w, required_h);
                         return node;
                     }
 
@@ -221,7 +225,7 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                         parent_node.Width,
                         parent_node.Height - used_h - height_padding);
             }
-        
+
         public int Get_Index_Of_Surface(IntPtr surface)
             {
                 int index = Array.IndexOf(this.Surface_Data, surface);
@@ -265,9 +269,9 @@ internal class Atlas_Entry
         public SDL_Rect Rectangle { get; set; }
         public bool Rotated { get; set; }
 
-        public Atlas_Entry(string filename, SDL_Rect 
-        rectangle = default, 
-        bool rotated = false)
+        public Atlas_Entry(string filename, SDL_Rect
+                rectangle = default,
+            bool rotated = false)
             {
                 this.Filename = filename;
                 this.Rectangle = rectangle;

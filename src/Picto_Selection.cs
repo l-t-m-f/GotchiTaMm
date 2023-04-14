@@ -5,7 +5,7 @@ namespace GotchiTaMm;
 
 internal class Picto_Selection
     {
-        internal IntPtr Image;
+        // internal IntPtr Image;
         internal int Cursor_Index;
         internal SDL_Rect Selection_Pos_And_Size;
 

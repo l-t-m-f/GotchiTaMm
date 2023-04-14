@@ -45,7 +45,7 @@ internal class Subsystem_Input
 
                 if (keysym.scancode == SDL_Scancode.SDL_SCANCODE_ESCAPE)
                     {
-                        QuitGame(0);
+                        Quit_Game(0);
                     }
                 else
                     {

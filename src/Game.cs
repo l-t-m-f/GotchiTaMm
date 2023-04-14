@@ -9,7 +9,9 @@ internal class Game
         internal Clock? Clock { get; set; }
 
         //Singleton
-        internal static readonly Lazy<Game> Lazy_Instance = new(() => new Game());
+        private static readonly Lazy<Game> _Lazy_Instance =
+            new(() => new Game());
+
         private Game()
             {
                 this.Pet = new Gotchi_Pet();
@@ -17,7 +19,7 @@ internal class Game
                 this.Scene = new Game_Scene();
             }
 
-        public static Game Instance => Lazy_Instance.Value;
+        public static Game Instance => _Lazy_Instance.Value;
 
         //private Game(SaveState save)
         //{
@@ -30,8 +32,5 @@ internal class Game
 
         internal void Compare_Age_Since_Last_Shutdown()
             {
-
             }
-
-
     }
