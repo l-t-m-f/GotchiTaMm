@@ -1,162 +1,241 @@
-﻿using System.ComponentModel;
-using System;
+﻿using static SDL2.SDL;
 
 namespace GotchiTaMm;
 
-internal enum LifeStageType
-    {
-        EGG = 0,
-        BABY,
-        CHILD,
-        TEENAGER,
-        ADULT,
-        SPECIAL_ADULT,
-        SENIOR,
-        DEATH,
-    }
-
-internal enum GotchiFormType
-    {
-        [Description("Baby")] BABYTCHI = 0,
-        [Description("Child")] MARUTCHI,
-        [Description("Teenager")] KUCHITAMATCHI,
-        TAMATCHI,
-        [Description("Adult")] TARAKOTCHI,
-        NYOROTCHI,
-        KUCHIPATCHI,
-        MASKUTCHI,
-        GINJIROTCHI,
-        MAMETCHI,
-        [Description("SpecialAdult")] BILL,
-    }
-
 internal class Gotchi_Pet
-    {
-        internal bool IsSleepy = false;
-        internal bool NeedsAttention = false;
-        internal bool IsMisbehaving = false;
-        internal int WakingHour = 0;
-        internal int SleepingHour = 0;
-        internal byte[] IllnessGauje = new byte[] { 0, 0 };
-        internal bool Poo = false;
-        internal byte Age = 0;
-        internal byte DisciplineScore = 0;
+   {
+      private bool _is_sleepy = false;
+      private bool _needs_attention = false;
+      private bool _is_misbehaving = false;
+      private int _waking_hour = 0;
+      private int _sleeping_hour = 0;
+      internal byte[] IllnessGauje = { 0, 0 };
+      private bool _poo = false;
+      private byte _age = 0;
+      private byte _discipline_score = 0;
 
-        // Hunger mechanics
-        private byte Weight = 1;
-        private const byte WEIGHT_MAX = 100;
+      // Hunger mechanics
+      private byte _weight = 1;
+      private const byte _WEIGHT_MAX = 100;
 
-        private byte Hunger = 4;
-        private const byte HUNGER_MAX = 4;
-        private byte ConsecutiveSnacks = 0;
-        internal const float CONSECUTIVE_SNACK_REDUCE_TICK_TIMING = 3000.0f;
-        private const byte CONSECUTIVE_SNACKS_MAX = 15;
-        private const byte CONSECUTIVE_SNACKS_SICK_THRESHOLD = 4;
-        private const byte CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD = 11;
-        private bool IsSick = false;
-        private bool IsNearDeath = false;
+      private byte _hunger = 4;
+      private const byte _HUNGER_MAX = 4;
+      private byte _consecutive_snacks;
+      internal const float CONSECUTIVE_SNACK_REDUCE_TICK_TIMING = 3000.0f;
+      private const byte _CONSECUTIVE_SNACKS_MAX = 15;
+      private const byte _CONSECUTIVE_SNACKS_SICK_THRESHOLD = 4;
+      private const byte _CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD = 11;
+      private bool _is_sick;
+      private bool _is_near_death;
 
-        // Happiness mechanics
-        private byte Happiness = 4;
-        const byte _HAPPY_MAX = 4;
+      // Happiness mechanics
+      private byte _happiness = 4;
+      const byte _HAPPY_MAX = 4;
 
 
-        public int EvolutionScore = 0;
-        internal LifeStageType LifeStage = LifeStageType.EGG;
+      private int _evolution_score = 0;
+      internal LifeStageType LifeStage = LifeStageType.EGG;
 
-        internal void Animate()
-            {
-            }
+      private Gotchi_Pet_Form_Type
+         _pet_form = Gotchi_Pet_Form_Type.BABYTCHI;
 
-        internal enum Meal_Type
-            {
-                MEAL = 0,
-                SNACK = 1,
-            }
+      internal SDL_Rect Render_Rect;
+      internal SDL_Point Render_Offset;
 
-        /*
-         * Feeds the GotchiPet a meal or snack.
-         */
-        internal void Feed(Meal_Type meal)
-            {
-                switch (meal)
-                    {
-                        case Meal_Type.MEAL:
-                            {
-                                Console.WriteLine(
-                                    $"You fed the GotchiPet a good ol' bowl of rice!");
-                                if (this.Hunger < HUNGER_MAX)
-                                    {
-                                        this.Hunger = HUNGER_MAX;
-                                    }
+      private Random _rng;
 
-                                if (this.Weight < WEIGHT_MAX)
-                                    {
-                                        this.Weight++;
-                                    }
+      internal Gotchi_Pet()
+         {
+            this.Update_Render_Rect();
+            this._rng = new Random();
+         }
 
-                                break;
-                            }
+      internal void Walk()
+         {
+            this.Render_Offset.x += this._rng.Next(-2, 3);
+            this.Render_Offset.y += this._rng.Next(-2, 3);
+         }
+      
+      internal void Animate()
+         {
+         }
 
-                        case Meal_Type.SNACK:
-                            {
-                                if (this.Happiness < _HAPPY_MAX)
-                                    {
-                                        this.Happiness++;
-                                    }
+      internal void Update_Render_Rect()
+         {
+            switch (this._pet_form)
+               {
+                  case Gotchi_Pet_Form_Type.BABYTCHI:
+                     {
+                        this.Render_Rect = Subsystem_Imaging
+                           .Instance.Sprite_Atlas
+                           .Get_Atlas_Image_Rect("Pet_v1");
 
-                                if (this.Weight < WEIGHT_MAX)
-                                    {
-                                        this.Weight += 2;
-                                    }
+                        this.Render_Rect.w =
+                           (int)(this.Render_Rect.w *
+                                 Main_App.SCREEN_RATIO);
+                        this.Render_Rect.h =
+                           (int)(this.Render_Rect.h *
+                                 Main_App.SCREEN_RATIO);
+                        this.Render_Rect.x =
+                           (int)(Main_App.WINDOW_W * Main_App.SCREEN_RATIO
+                                 / 2) + this.Render_Offset.x - this
+                                 .Render_Rect.w/2;
+                        this.Render_Rect.y =
+                           (int)(Main_App.WINDOW_H * Main_App.SCREEN_RATIO
+                                 / 2) + this.Render_Offset.y- this
+                              .Render_Rect.h/2;
+                     }
+                     break;
+                  case Gotchi_Pet_Form_Type.MARUTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.KUCHITAMATCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.TAMATCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.TARAKOTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.NYOROTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.KUCHIPATCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.MASKUTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.GINJIROTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.MAMETCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.BILL:
+                     break;
+                  default:
+                     throw new ArgumentOutOfRangeException();
+               }
+         }
+      
+      internal void Draw()
+         {
+            switch (_pet_form)
+               {
+                  case Gotchi_Pet_Form_Type.BABYTCHI:
+                     SDL_RenderCopy(Main_App.Renderer, Subsystem_Imaging
+                           .Instance.Sprite_Atlas
+                           .Get_Atlas_Image("Pet_v1"),
+                        IntPtr.Zero,
+                        ref this.Render_Rect);
+                     break;
+                  case Gotchi_Pet_Form_Type.MARUTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.KUCHITAMATCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.TAMATCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.TARAKOTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.NYOROTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.KUCHIPATCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.MASKUTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.GINJIROTCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.MAMETCHI:
+                     break;
+                  case Gotchi_Pet_Form_Type.BILL:
+                     break;
+                  default:
+                     throw new ArgumentOutOfRangeException();
+               }
+         }
 
-                                this.ConsecutiveSnacks++;
-                                if (this.ConsecutiveSnacks >=
-                                    CONSECUTIVE_SNACKS_SICK_THRESHOLD
-                                    && !this.IsSick)
-                                    {
-                                        this.IsSick = true;
-                                    }
+      internal enum Meal_Type
+         {
+            MEAL = 0,
+            SNACK = 1,
+         }
 
-                                if (this.ConsecutiveSnacks >=
-                                    CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD
-                                    && !this.IsNearDeath)
-                                    {
-                                        this.IsNearDeath = true;
-                                    }
+      /*
+       * Feeds the GotchiPet a meal or snack.
+       */
+      internal void Feed(Meal_Type meal)
+         {
+            switch (meal)
+               {
+                  case Meal_Type.MEAL:
+                     {
+                        Console.WriteLine(
+                           $"You fed the GotchiPet a good ol' bowl of rice!");
+                        if (this._hunger < _HUNGER_MAX)
+                           {
+                              this._hunger = _HUNGER_MAX;
+                           }
 
-                                if (this.ConsecutiveSnacks >=
-                                    CONSECUTIVE_SNACKS_MAX
-                                    && this.IsSick && this.IsNearDeath)
-                                    {
-                                        this.LifeStage = LifeStageType.DEATH;
-                                    }
+                        if (this._weight < _WEIGHT_MAX)
+                           {
+                              this._weight++;
+                           }
 
-                                break;
-                            }
+                        break;
+                     }
 
-                        default:
-                            break;
-                    }
-            }
+                  case Meal_Type.SNACK:
+                     {
+                        if (this._happiness < _HAPPY_MAX)
+                           {
+                              this._happiness++;
+                           }
 
-        internal void Play_With()
-            {
-            }
+                        if (this._weight < _WEIGHT_MAX)
+                           {
+                              this._weight += 2;
+                           }
 
-        internal void Give_Meds()
-            {
-            }
+                        this._consecutive_snacks++;
+                        if (this._consecutive_snacks >=
+                            _CONSECUTIVE_SNACKS_SICK_THRESHOLD
+                            && !this._is_sick)
+                           {
+                              this._is_sick = true;
+                           }
 
-        internal void Clean()
-            {
-            }
+                        if (this._consecutive_snacks >=
+                            _CONSECUTIVE_SNACKS_NEARDEATH_THRESHOLD
+                            && !this._is_near_death)
+                           {
+                              this._is_near_death = true;
+                           }
 
-        internal void Get_Status()
-            {
-            }
+                        if (this._consecutive_snacks >=
+                            _CONSECUTIVE_SNACKS_MAX
+                            && this._is_sick && this._is_near_death)
+                           {
+                              this.LifeStage = LifeStageType.DEATH;
+                           }
 
-        internal void Discipline()
-            {
-            }
-    }
+                        break;
+                     }
+
+                  default:
+                     break;
+               }
+         }
+
+      internal void Play_With()
+         {
+         }
+
+      internal void Give_Meds()
+         {
+         }
+
+      internal void Clean()
+         {
+         }
+
+      internal void Get_Status()
+         {
+         }
+
+      internal void Discipline()
+         {
+         }
+   }

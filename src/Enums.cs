@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿using System.ComponentModel;
 
 namespace GotchiTaMm;
 
@@ -58,4 +58,32 @@ internal enum Button_Name_Type
         SELECT = 0,
         EXECUTE,
         CANCEL,
+    }
+    
+    
+internal enum LifeStageType
+    {
+        EGG = 0,
+        BABY,
+        CHILD,
+        TEENAGER,
+        ADULT,
+        SPECIAL_ADULT,
+        SENIOR,
+        DEATH,
+    }
+
+internal enum Gotchi_Pet_Form_Type
+    {
+        [Description("Baby")] BABYTCHI = 0,
+        [Description("Child")] MARUTCHI,
+        [Description("Teenager")] KUCHITAMATCHI,
+        TAMATCHI,
+        [Description("Adult")] TARAKOTCHI,
+        NYOROTCHI,
+        KUCHIPATCHI,
+        MASKUTCHI,
+        GINJIROTCHI,
+        MAMETCHI,
+        [Description("SpecialAdult")] BILL,
     }

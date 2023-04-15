@@ -9,6 +9,7 @@ internal class Button
         private string _artwork_call_name;
         internal Button_State_Type Button_State;
         private SDL_Point _offset;
+        private SDL_Rect _collider;
 
         // EVENTS FOR BUTTONS
         public event VoidDelegate? ButtonEvent;
@@ -27,55 +28,56 @@ internal class Button
             {
                 if (this._art_style == Art_Style_Type.SINGLE_SPRITE)
                     {
-                        IntPtr ptr_to_art =
-                            Subsystem_Imaging.Instance.Sprite_Atlas
-                                .Get_Atlas_Image(this._artwork_call_name);
-                        SDL_Rect art_dest =
-                            Subsystem_Imaging.Instance.Sprite_Atlas
-                                .Get_Atlas_Image_Rect(
-                                    this._artwork_call_name);
-                        art_dest.w = (int)(art_dest.w * SCREEN_RATIO);
-                        art_dest.h = (int)(art_dest.h * SCREEN_RATIO);
-                        art_dest.x = (int)(this._offset.x * SCREEN_RATIO)
-                                     - art_dest.w / 2;
-                        art_dest.y = (int)(this._offset.y * SCREEN_RATIO)
-                                     - art_dest.h / 2;
+                        IntPtr ptr_to_art;
+                       
+                        if (this.TestMouseOverlap())
+                            {
+                
+                                this._collider =
+                                    Subsystem_Imaging.Instance.Sprite_Atlas
+                                        .Get_Atlas_Image_Rect($"{this._artwork_call_name}_hovered");
+                                this._collider.w = (int)(this._collider.w * SCREEN_RATIO);
+                                this._collider.h = (int)(this._collider.h * SCREEN_RATIO);
+                                this._collider.x = (int)(this._offset.x * SCREEN_RATIO)
+                                    - this._collider.w / 2;
+                                this._collider.y = (int)(this._offset.y * SCREEN_RATIO)
+                                    - this._collider.h / 2;
+                                ptr_to_art = Subsystem_Imaging.Instance.Sprite_Atlas
+                                    .Get_Atlas_Image($"{this._artwork_call_name}_hovered");
+                            }
+                        else
+                            {
+                
+                                this._collider =
+                                    Subsystem_Imaging.Instance.Sprite_Atlas
+                                        .Get_Atlas_Image_Rect($"{this._artwork_call_name}_silent");
+                                this._collider.w = (int)(this._collider.w * SCREEN_RATIO);
+                                this._collider.h = (int)(this._collider.h * SCREEN_RATIO);
+                                this._collider.x = (int)(this._offset.x * SCREEN_RATIO)
+                                    - this._collider.w / 2;
+                                this._collider.y = (int)(this._offset.y * SCREEN_RATIO)
+                                    - this._collider.h / 2;
+                                ptr_to_art = Subsystem_Imaging.Instance.Sprite_Atlas
+                                    .Get_Atlas_Image($"{this._artwork_call_name}_silent");
+                            }
+                        
+                        
                         SDL_RenderCopy(Renderer, ptr_to_art,
-                            IntPtr.Zero, ref art_dest);
+                            IntPtr.Zero, ref this._collider);
                     }
-                // if (this.TestMouseOverlap())
-                //     {
-                //         SDL_SetRenderDrawColor(Renderer, 255,
-                //             Subsystem_Input.Instance.Mouse.Buttons[1] == 1
-                //                 ? (byte)0
-                //                 : (byte)255, this._color[0].b,
-                //             this._color[0].a);
-                //     }
-                // else
-                //     {
-                //         SDL_SetRenderDrawColor(Renderer, this._color[0].r,
-                //             this._color[0].g, this._color[0].b,
-                //             this._color[0].a);
-                //     }
-                //
-                // SDL_RenderFillRect(Renderer, ref this._rectangle);
-                //
-                // SDL_SetRenderDrawColor(Renderer, this._color[1].r,
-                //     this._color[1].g, this._color[1].b, this._color[1].a);
-                // SDL_RenderDrawRect(Renderer, ref this._rectangle);
             }
 
-        // public bool TestMouseOverlap()
-        //     {
-        //         return Subsystem_Input.Instance.Mouse.Position.x >
-        //                this._rectangle.x
-        //                && Subsystem_Input.Instance.Mouse.Position.x <
-        //                this._rectangle.x + this._rectangle.w
-        //                && Subsystem_Input.Instance.Mouse.Position.y >
-        //                this._rectangle.y
-        //                && Subsystem_Input.Instance.Mouse.Position.y <
-        //                this._rectangle.y + this._rectangle.h;
-        //     }
+        public bool TestMouseOverlap()
+            {
+                return Subsystem_Input.Instance.Mouse.Position.x >
+                       this._collider.x
+                       && Subsystem_Input.Instance.Mouse.Position.x <
+                       this._collider.x + this._collider.w
+                       && Subsystem_Input.Instance.Mouse.Position.y >
+                       this._collider.y
+                       && Subsystem_Input.Instance.Mouse.Position.y <
+                       this._collider.y + this._collider.h;
+            }
 
         internal void Activate()
             {

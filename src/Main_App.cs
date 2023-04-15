@@ -20,6 +20,7 @@ internal class Main_App
         // OTHER THREADS
         private static Thread? Clock;
         private static Thread? Animate;
+        private static Thread? PetWalk;
 
         private static bool Continue = true;
 
@@ -30,6 +31,7 @@ internal class Main_App
 
                 Clock = new Thread(Clock_Thread);
                 Animate = new Thread(Animate_Thread);
+                PetWalk = new Thread(Walk_Thread);
 
                 Task<Save_State> load_data = Subsystem_Serialization.Instance.Load_Game();
                 Subsystem_Serialization.Instance.SavedGame = load_data.Result;
@@ -42,6 +44,7 @@ internal class Main_App
 
                 Clock.Start();
                 Animate.Start();
+                PetWalk.Start();
 
                 while (Continue)
                     {
@@ -101,8 +104,8 @@ internal class Main_App
 
                 SDL_ShowCursor(0);
                 
-                Subsystem_UI.Instance.Init();
                 Subsystem_Imaging.Instance.Make_Atlas();
+                Subsystem_UI.Instance.Init();
                 Subsystem_Imaging.Instance.Font_Atlas.Make_Sheets_For
                 (Font_Name_Type.RAINY_HEARTS);
                 Subsystem_Imaging.Instance.Animation_Loader.Make_Animations();
@@ -123,6 +126,7 @@ internal class Main_App
                 // .background_rect);
                 
                 Game.Instance.Scene.Draw();
+                Game.Instance.Pet.Draw();
                 Subsystem_UI.Instance.Draw();
 
                 
@@ -173,12 +177,12 @@ internal class Main_App
                         return;
                     }
 
-                // foreach (Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values.Where(b => b.TestMouseOverlap()))
-                //     {
-                //         b.Activate();
-                //         Subsystem_Input.Instance.Mouse.Buttons[1] = 0;
-                //         break;
-                //     }
+                foreach (Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values.Where(b => b.TestMouseOverlap()))
+                    {
+                        b.Activate();
+                        Subsystem_Input.Instance.Mouse.Buttons[1] = 0;
+                        break;
+                    }
             }
 
         internal static void Quit_Game(sbyte program_code)
@@ -216,6 +220,16 @@ internal class Main_App
                     {
                         Thread.Sleep((1 / 60) * 100);
                         Game.Instance.Pet.Animate();
+                    }
+            }
+
+        private static void Walk_Thread()
+            {
+                while (true)
+                    {
+                        Game.Instance.Pet.Walk();
+                        Game.Instance.Pet.Update_Render_Rect();
+                        Thread.Sleep(500);
                     }
             }
 
