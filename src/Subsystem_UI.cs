@@ -10,7 +10,7 @@ namespace GotchiTaMm;
 // ReSharper disable once InconsistentNaming
 internal class Subsystem_UI
     {
-        private const int _MAX_FONT_SIZE_FACTOR = 12;
+        private const int _MAX_FONT_SIZE_FACTOR = 8;
 
         private const string _CLOCK_REGEX_FORMAT =
             @"^([01]\d|2[0-3]):([0-5]\d)$";
@@ -55,68 +55,75 @@ internal class Subsystem_UI
 
         private void Init_Buttons_Subroutine()
             {
-                SDL_Color[] button_color_theme =
-                    {
-                        new() { r = 0, g = 255, b = 0, a = 255 },
-                        new() { r = 255, g = 0, b = 0, a = 255 },
-                    };
-
-                const int WINDOW_FIFTH = WINDOW_W / 5;
-                
-                this.Buttons_Dictionary.Add(Button_Name_Type.SELECT, new Button(
-                    new SDL_Rect
-                        {
-                            x = (int)(WINDOW_FIFTH * SCREEN_RATIO) - 20,
-                            y = 200,
-                            w = 40,
-                            h = 40
-                        },
-                    button_color_theme,
-                    Subsystem_Input.Instance.Select_Button_Pressed));
-
-                this.Buttons_Dictionary.Add(Button_Name_Type.EXECUTE,
-                    new Button(
-                        new SDL_Rect
+                this.Buttons_Dictionary.Add(Button_Name_Type.SELECT, new
+                    Button(Art_Style_Type.SINGLE_SPRITE, "Button_B_silent",
+                        Subsystem_Input.Instance.Select_Button_Pressed,
+                        new SDL_Point
                             {
-                                x = (int)((WINDOW_W/2) * SCREEN_RATIO) - 20,
-                                y = 200,
-                                w = 40,
-                                h = 40
-                            },
-                        button_color_theme,
-                        Subsystem_Input.Instance.Execute_Button_Pressed));
+                                x = WINDOW_W / 5 * 1, 
+                                y = 80
+                            }));
 
-                this.Buttons_Dictionary.Add(Button_Name_Type.CANCEL, new Button(
-                    new SDL_Rect
-                        {
-                          
-                            x = (int)((WINDOW_W - WINDOW_FIFTH) * SCREEN_RATIO) - 20,
-                            y = 200,
-                            w = 40,
-                            h = 40
-                        },
-                    button_color_theme,
-                    Subsystem_Input.Instance.Cancel_Button_Pressed));
+                this.Buttons_Dictionary.Add(Button_Name_Type.EXECUTE, new
+                    Button(Art_Style_Type.SINGLE_SPRITE, "Button_Y_silent",
+                        Subsystem_Input.Instance.Select_Button_Pressed,
+                        new SDL_Point
+                            {
+                                x = WINDOW_W / 2, 
+                                y = 80
+                            }));
+
+                this.Buttons_Dictionary.Add(Button_Name_Type.CANCEL, new
+                    Button(Art_Style_Type.SINGLE_SPRITE, "Button_R_silent",
+                        Subsystem_Input.Instance.Select_Button_Pressed,
+                        new SDL_Point
+                            {
+                                x = WINDOW_W / 5 * 4,
+                                y = 80
+                            }));
             }
 
 
         private void Init_Fonts_Subroutine()
             {
-                foreach (Font_Name_Type fontNameType in Enum.GetValues(typeof(Font_Name_Type)))
+                /*
+                 * Loops for each enum value in Font_Name_Type
+                 * Each value should match a font file in the fonts folder
+                 * Enum name is ALL_CAPPED, while font file name is defined in
+                 * the Enums.cs file as part of Font_Name_Type's extensions
+                 */
+                foreach (Font_Name_Type font_name_type in Enum.GetValues(
+                             typeof(Font_Name_Type)))
                     {
-                        IntPtr[] fontArray = new IntPtr[_MAX_FONT_SIZE_FACTOR];
-                        this.Fonts_Dictionary.Add(fontNameType, fontArray);
+                        /*
+                         * Array of pointers to fonts of different sizes
+                         * min size if 2^2, max size is 2^10
+                         */
+                        var next_font_array = new IntPtr[_MAX_FONT_SIZE_FACTOR];
 
-                        for (int j = 0; j < fontArray.Length; j++)
+                        /*
+                         * Load fonts in the array one by one
+                         */
+                        for (int j = 0; j < next_font_array.Length; j++)
                             {
-                                IntPtr last_font = TTF_OpenFont($"fonts/{fontNameType.To_Friendly_String()}.ttf", (int)Math.Pow(2, j));
+                                IntPtr last_font = TTF_OpenFont(
+                                    $"fonts/{font_name_type.To_Friendly_String()}.ttf",
+                                    (int)Math.Pow(2, j));
                                 if (last_font == IntPtr.Zero)
                                     {
-                                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, $"There was a problem loading the font!\n {SDL_GetError()}");
+                                        SDL_LogError(
+                                            SDL_LOG_CATEGORY_APPLICATION,
+                                            $"There was a problem loading the font!\n {SDL_GetError()}");
                                     }
 
-                                fontArray[j] = last_font;
+                                next_font_array[j] = last_font;
                             }
+                        
+                        /*
+                         * Add the array to the dictionary
+                         */
+                        this.Fonts_Dictionary.Add(font_name_type,
+                            next_font_array);
                     }
             }
 
@@ -160,22 +167,108 @@ internal class Subsystem_UI
 
         public void Draw()
             {
+                
                 foreach (Button b in this.Buttons_Dictionary.Values)
                     {
                         b.Draw();
                     }
 
-                if (this.Can_Draw_Pictos == false)
+                // if (this.Can_Draw_Pictos == false)
+                //     {
+                //         return;
+                //     }
+                //
+                // if (this.Picto_Selection.Cursor_Index < 0)
+                //     {
+                //     }
+
+                switch (Game.Instance.State)
                     {
-                        return;
+                        case Game_State_Start:
+                            { this.DrawPictos();
+                                break;
+                            }
+                        case Game_State_Pet_View:
+                            {
+                                this.DrawPictos();
+                                break;
+                            }
                     }
 
-                if (this.Picto_Selection.Cursor_Index < 0)
-                    {
-                    }
+                SDL_Rect mouse_rect = Subsystem_Imaging.Instance
+                                .Sprite_Atlas
+                                .Get_Atlas_Image_Rect
+                                    ("Cursor");
+                            mouse_rect.x = Subsystem_Input.Instance.Mouse
+                                .Position.x;
+                            mouse_rect.y = Subsystem_Input.Instance.Mouse
+                                .Position.y;
+                            mouse_rect.w =
+                                (int)(mouse_rect.w * SCREEN_RATIO);
+                            mouse_rect.h =
+                                (int)(mouse_rect.h * SCREEN_RATIO);
+                            SDL_RenderCopy(Renderer, Subsystem_Imaging
+                                    .Instance.Sprite_Atlas
+                                    .Get_Atlas_Image("Cursor"),
+                                IntPtr.Zero,
+                                ref mouse_rect);
 
-                // BlitRect(Renderer, this.Picto_Selection.Image,
+                        // BlitRect(Renderer, this.Picto_Selection.Image,
                 //     this.Picto_Selection.Selection_Pos_And_Size);
+            }
+
+        private void DrawPictos()
+            {
+                for (int row = 0; row < 2; row++)
+                    {
+                        for (int col = 0; col < 4; col++)
+                            {
+                                SDL_Rect picto_bg_dest =
+                                    Subsystem_Imaging.Instance
+                                        .Sprite_Atlas.Get_Atlas_Image_Rect
+                                            ("ButtonBg");
+                                
+                                
+                                picto_bg_dest.w = (int)(picto_bg_dest.w * SCREEN_RATIO);
+                                picto_bg_dest.h = (int)(picto_bg_dest.h * SCREEN_RATIO);
+                                picto_bg_dest.x =
+                                    (int)(WINDOW_W/5 * col * 
+                                          SCREEN_RATIO) + (int)
+                                          (picto_bg_dest.w
+                                        * 1.25);
+                                picto_bg_dest.y = row == 0
+                                    ? (int)(2 *
+                                            SCREEN_RATIO)
+                                    : (int)(40 *
+                                            SCREEN_RATIO);
+                                
+                                SDL_Rect picto_dest =
+                                    Subsystem_Imaging.Instance
+                                        .Sprite_Atlas.Get_Atlas_Image_Rect
+                                            ($"Picto{1+(row * 4 + col)}");
+                                
+                                picto_dest.w = (int)(picto_dest.w * SCREEN_RATIO);
+                                picto_dest.h = (int)(picto_dest.h * SCREEN_RATIO);
+                                picto_dest.x =
+                                    (int)(WINDOW_W/5 * col * 
+                                          SCREEN_RATIO) + picto_dest.w / 3;
+                                picto_dest.y = row == 0
+                                    ? (int)(2 *
+                                            SCREEN_RATIO)
+                                    : (int)(40 *
+                                            SCREEN_RATIO);
+                                SDL_RenderCopy(Renderer,
+                                    Subsystem_Imaging.Instance.Sprite_Atlas
+                                        .Get_Atlas_Image(
+                                            "ButtonBg")
+                                    , IntPtr.Zero, ref picto_bg_dest);
+                                SDL_RenderCopy(Renderer,
+                                    Subsystem_Imaging.Instance.Sprite_Atlas
+                                        .Get_Atlas_Image(
+                                            $"Picto{1+(row * 4 + col)}")
+                                    , IntPtr.Zero, ref picto_dest);
+                            }
+                    }
             }
 
         internal void Update_Text_Var(

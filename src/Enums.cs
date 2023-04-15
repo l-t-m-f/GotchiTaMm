@@ -27,9 +27,16 @@ internal enum Font_Name_Type
         RAINY_HEARTS,
     }
 
+internal enum Art_Style_Type
+    {
+        SINGLE_SPRITE,
+        ANIMATION
+    }
+
 internal static class Font_Name_Type_Extensions
     {
-        public static string? To_Friendly_String(this Font_Name_Type font_name)
+        public static string? To_Friendly_String(
+            this Font_Name_Type font_name)
             {
                 return font_name switch
                     {

@@ -93,6 +93,7 @@ internal class Sprite_Atlas : IComparer<IntPtr>
 
                 SDL_Rect extraction_rectangle = entry.Rectangle;
 
+
                 // Create a new surface to hold the extracted image
                 IntPtr extracted_surface = SDL_CreateRGBSurfaceWithFormat(0,
                     extraction_rectangle.w, extraction_rectangle.h, 32,
@@ -104,7 +105,10 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                             $"\n{SDL_GetError()}");
                         return IntPtr.Zero;
                     }
-
+                
+                
+                
+                
                 // Extract the image from the MasterSurface using the extraction rectangle
                 if (SDL_BlitSurface(this.Master_Surface,
                         ref extraction_rectangle,
@@ -115,6 +119,18 @@ internal class Sprite_Atlas : IComparer<IntPtr>
                             $"\n{SDL_GetError()}");
                         SDL_FreeSurface(extracted_surface);
                         return IntPtr.Zero;
+                    }
+                
+                
+                if (entry.Rotated)
+                    {
+                        IntPtr rotated_extr_surface = Subsystem_Imaging
+                            .Rotate_Surface(extracted_surface);
+
+                        // int temp_w = extraction_rectangle.w;
+                        // extraction_rectangle.w = extraction_rectangle.h;
+                        // extraction_rectangle.h = temp_w;
+                        extracted_surface = rotated_extr_surface;
                     }
 
                 IntPtr final_texture =

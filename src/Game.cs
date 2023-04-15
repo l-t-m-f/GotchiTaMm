@@ -1,5 +1,7 @@
 ﻿using System;
 
+using static SDL2.SDL;
+
 namespace GotchiTaMm;
 
 internal class Game
@@ -32,5 +34,18 @@ internal class Game
 
         internal void Compare_Age_Since_Last_Shutdown()
             {
+            }
+
+        internal void Test()
+            {
+                string? input = Console.ReadLine();
+                if (input is null)
+                    {
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Input was null");
+                        return;
+                    }
+                
+                
+                
             }
     }

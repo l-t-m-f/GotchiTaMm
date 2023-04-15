@@ -98,11 +98,15 @@ internal class Main_App
                         Console.WriteLine(
                             $"There was an issue starting SDL_image:\n{SDL_GetError()}!");
                     }
+
+                SDL_ShowCursor(0);
                 
                 Subsystem_UI.Instance.Init();
                 Subsystem_Imaging.Instance.Make_Atlas();
-                Subsystem_Imaging.Instance.Font_Atlas.Make_Sheet_For
-                (Font_Name_Type.RAINY_HEARTS, 4);
+                Subsystem_Imaging.Instance.Font_Atlas.Make_Sheets_For
+                (Font_Name_Type.RAINY_HEARTS);
+                Subsystem_Imaging.Instance.Animation_Loader.Make_Animations();
+                
 
             }
         
@@ -123,8 +127,10 @@ internal class Main_App
 
                 
                 Subsystem_Imaging.Instance.Font_Atlas.Draw_With_Sheet(
-                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 100, 100, new SDL_Color { r = 255, 
-                        g = 0, b = 0 }, Font_Name_Type.RAINY_HEARTS,10);
+                    "Hello, world", 4, 100, 100, new SDL_Color { r = 255, 
+                        g = 0, b = 0 }, Font_Name_Type.RAINY_HEARTS, 10);
+
+                
                 SDL_RenderPresent(Renderer);
             }
         
@@ -167,12 +173,12 @@ internal class Main_App
                         return;
                     }
 
-                foreach (Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values.Where(b => b.TestMouseOverlap()))
-                    {
-                        b.Activate();
-                        Subsystem_Input.Instance.Mouse.Buttons[1] = 0;
-                        break;
-                    }
+                // foreach (Button b in Subsystem_UI.Instance.Buttons_Dictionary.Values.Where(b => b.TestMouseOverlap()))
+                //     {
+                //         b.Activate();
+                //         Subsystem_Input.Instance.Mouse.Buttons[1] = 0;
+                //         break;
+                //     }
             }
 
         internal static void Quit_Game(sbyte program_code)

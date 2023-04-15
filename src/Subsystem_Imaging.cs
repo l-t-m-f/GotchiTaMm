@@ -17,6 +17,7 @@ public class Subsystem_Imaging
         private const string _SEARCH_PATTERN = "*.png";
         internal Sprite_Atlas Sprite_Atlas { get; set; }
         internal Font_Atlas Font_Atlas { get; set; }
+        internal Animation_Loader Animation_Loader { get; set; }
 
         //Lazy Singleton implementation
         private static readonly Lazy<Subsystem_Imaging> _Lazy_Instance =
@@ -26,6 +27,7 @@ public class Subsystem_Imaging
             {
                 this.Sprite_Atlas = new Sprite_Atlas();
                 this.Font_Atlas = new Font_Atlas();
+                this.Animation_Loader = new Animation_Loader();
             }
 
         public static Subsystem_Imaging Instance => _Lazy_Instance.Value;
@@ -148,7 +150,7 @@ public class Subsystem_Imaging
         /// </summary>
         /// <param name="source_surface_ptr"></param>
         /// <returns></returns>
-        private static IntPtr Rotate_Surface(IntPtr source_surface_ptr)
+        internal static IntPtr Rotate_Surface(IntPtr source_surface_ptr)
             {
                 var source_surface =
                     Marshal.PtrToStructure<SDL_Surface>(source_surface_ptr);
